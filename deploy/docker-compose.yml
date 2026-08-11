@@ -5,6 +5,8 @@
 # The reverse proxy reaches this container as host `gridgo-landing` on port 3000
 # over the `gridgo-edge` network, so the container name, the port and the
 # network are load-bearing — changing any of them makes the site unreachable.
+name: gridgo-landing
+
 services:
   gridgo-landing:
     image: ${GRIDGO_LANDING_IMAGE:-ghcr.io/rqms40/gridgo-landing:latest}
