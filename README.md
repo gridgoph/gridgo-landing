@@ -13,8 +13,9 @@ Related surfaces: the dashboard is **gridgo-dash.talasora.com**, the API is
 Vite · React 19 · TypeScript · Tailwind v4 · framer-motion · react-three-fiber /
 drei / three · react-router-dom.
 
-Ported from the captain's page in `printing_app/apps/Landing-page`, keeping the
-design, the 3D hero and the motion work intact.
+Ported from the captain's page on the `GRIDGOv3` branch of
+`printing_app` (`apps/Landing-page`), keeping the design, the light/dark theme,
+the 3D layer and the motion work intact.
 
 ## Running it
 
@@ -36,17 +37,17 @@ as an honest "not published yet" state rather than a dead link.
 |---|---|---|
 | `VITE_API_URL` | `https://gridgo-api.talasora.com/api` | API base for the support form |
 | `VITE_DASHBOARD_URL` | `https://gridgo-dash.talasora.com` | Partner dashboard link |
-| `VITE_SUPPORT_TICKETS_ENABLED` | `false` | `true` once the API implements `POST /support-tickets` |
-| `VITE_GRID_COMMUNITY_URL` | *(none)* | Community CTA; hidden entirely when unset |
+| `VITE_GRID_COMMUNITY_URL` | the page's own default | Community CTA target |
+| `VITE_MOBILE_WEB_URL` | *(derived)* | "Access Mobile Web" target; without it the link resolves to port 8088, which nothing serves |
 
 The production values live in `.github/workflows/deploy.yml`.
 
 ## The `/download` page
 
-This is how people install GRIDGO — there is no Play Store listing. The page
-serves three apps: `gridgo-client` (customers), `gridgo-supplier` (print shops),
-`gridgo-rider` (riders), with size, last-updated date and a copyable SHA-256 for
-each, plus sideloading instructions.
+This is how people install GRIDGO today. Every "Download" affordance on the site
+routes here. The page serves three apps: `gridgo-client` (customers),
+`gridgo-supplier` (print shops), `gridgo-rider` (riders), with size,
+last-updated date and a copyable SHA-256 for each, plus install instructions.
 
 It reads those details from `~/gridgo/downloads/` on the server, mounted
 read-only into the container and served at `/downloads/`. Each app's own build

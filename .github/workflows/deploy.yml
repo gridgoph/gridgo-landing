@@ -31,9 +31,6 @@ env:
   # args below — setting them on the running container would do nothing.
   VITE_API_URL: https://gridgo-api.talasora.com/api
   VITE_DASHBOARD_URL: https://gridgo-dash.talasora.com
-  # The GRIDGO API has no POST /support-tickets endpoint yet. Flip to 'true'
-  # here when it ships, so the public page stops showing "not open yet".
-  VITE_SUPPORT_TICKETS_ENABLED: 'false'
 
 jobs:
   checks:
@@ -86,8 +83,8 @@ jobs:
           build-args: |
             VITE_API_URL=${{ env.VITE_API_URL }}
             VITE_DASHBOARD_URL=${{ env.VITE_DASHBOARD_URL }}
-            VITE_SUPPORT_TICKETS_ENABLED=${{ env.VITE_SUPPORT_TICKETS_ENABLED }}
             VITE_GRID_COMMUNITY_URL=${{ vars.GRID_COMMUNITY_URL }}
+            VITE_MOBILE_WEB_URL=${{ vars.MOBILE_WEB_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

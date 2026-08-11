@@ -1,40 +1,52 @@
 # Project agent memory
 
 GRIDGO's public landing site, served at **`gridgo.talasora.com`**. Ported from
-the captain's own page at `printing_app/apps/Landing-page` — that directory is
-the design's origin and is read-only; never write into it.
+the captain's own page on the **`GRIDGOv3`** branch of `printing_app`
+(`apps/Landing-page`) — that repo is the design's origin and is read-only to us.
+Read it with `git -C <printing_app> show origin/GRIDGOv3:<path>`; never check it
+out and never write into it.
 
 ## Stack
 
 Vite + React 19 + TypeScript + Tailwind v4, with `framer-motion` for entrances
-and `@react-three/fiber` + `drei` + `three` for the fixed 3D hero. Routing is
+and `@react-three/fiber` + `drei` + `three` for the fixed 3D layer. Routing is
 `react-router-dom`. See `package.json` for the commands; `npm test` runs the
-copy-and-claims check scripts under `scripts/`.
+check scripts under `scripts/`.
 
 Three routes, all in `src/routes.tsx`: `/` (landing), `/support`, `/download`.
 
+**Light and dark are both real.** The theme is a `dark` class on `<html>` plus a
+`theme` key in localStorage, owned by `src/utils/useTheme.ts` and shared by every
+route — a route that manages it locally will start light on a deep link. Colours
+come from `--app-primary`, which is a *darker* yellow in light mode for contrast,
+so always use `var(--color-primary)` rather than the literal `#FFDE58`.
+
 ## The rules this page is held to
 
-**Every claim must be true.** The page was ported from a product that promised
-things GRIDGO cannot back. `scripts/check-claims.mjs` encodes what may not come
-back: no prices or peso figures, no delivery/response-time promises, no counts
-of shops or partners, no store badges, no 24/7 support claim, and **never the
-commission** or any supplier-invisible money detail. Read
-`/home/kali/firstmate/data/gridgo-operational-model-v2.md` before changing
-anything that describes how GRIDGO works.
+**The marketing copy is the captain's, and it ships as written.** Do not
+rewrite, soften or "correct" it on your own initiative — that was tried and
+reverted. `scripts/check-claims.mjs` deliberately does not police it.
 
-**Nothing unpublished gets a hardcoded link.** Anything GRIDGO has not shipped
-is configuration with no default, and renders as an honest "not yet" state when
-unset — see `src/utils/landingLinks.ts`. The support ticket form is gated on
-`VITE_SUPPORT_TICKETS_ENABLED` because the API has no `POST /support-tickets`
-endpoint; flip it in `.github/workflows/deploy.yml` when that ships.
+**What the check does enforce** is the commercially sensitive part: GRIDGO's
+commission, the supplier payout split and any peso figure must never appear on a
+public page, and no legacy host or `localhost` may ship. Read
+`/home/kali/firstmate/data/gridgo-operational-model-v2.md` before writing
+anything that describes how GRIDGO works, and keep the money detail out of it.
+
+**Every Download affordance routes to `/download`**, never to the `#download`
+section — `scripts/check-download-page.mjs` enforces that, along with the
+details a person needs before installing software from the open web.
 
 ## Sharp edges found the hard way
 
-- **The 3D needs its own `<Suspense>`.** The GLB and drei's environment map
-  suspend while loading. Without the boundary in `src/App.tsx`, that suspension
-  reaches the router's boundary and blanks the entire page — navbar and copy
-  included — until the 3D is ready.
+- **The 3D is decorative and must fail silently.** drei's `Environment` pulls
+  its HDR from a CDN that is sometimes slow, blocked or down. The boundary in
+  `PhoneScene` used to render the raw error in an absolutely-positioned red
+  div, which showed visitors a stack trace *and* scrolled the whole site
+  sideways on a phone. It returns `null` now.
+- **localStorage can throw.** Private windows and webviews deny it outright, and
+  reading it during render takes the whole page down. `useTheme` catches both
+  directions.
 - **`nginx -t` in the Dockerfile leaves a root-owned `/tmp/nginx.pid`**, which
   uid 101 then cannot write on sticky `/tmp`, so the container dies at start.
   The `rm -f` after it is load-bearing.
@@ -47,6 +59,12 @@ endpoint; flip it in `.github/workflows/deploy.yml` when that ships.
   YouTube embed). If they are blocked the scene degrades rather than failing.
 - Software WebGL takes ~1s to first paint. Browser checks need a real settle
   wait or they screenshot a black page and call it a pass.
+- **The hero assets are heavy** — the two route-animation GIFs are ~40 MB
+  together, which is most of the 73 MB image. They are the captain's artwork;
+  do not re-encode them without asking, but know that is where the weight is.
+- **`npm run build` did not pass on the source branch.** Unused locals and a
+  troika typing error had to be fixed during the port; expect the same next time
+  you pull from `GRIDGOv3`.
 
 ## Deploying
 
