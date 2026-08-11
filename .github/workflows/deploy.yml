@@ -84,7 +84,6 @@ jobs:
             VITE_API_URL=${{ env.VITE_API_URL }}
             VITE_DASHBOARD_URL=${{ env.VITE_DASHBOARD_URL }}
             VITE_GRID_COMMUNITY_URL=${{ vars.GRID_COMMUNITY_URL }}
-            VITE_MOBILE_WEB_URL=${{ vars.MOBILE_WEB_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

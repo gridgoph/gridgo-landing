@@ -46,6 +46,16 @@ job rejected the build. `check-claims.mjs` now asserts a rendered link uses
 
 ## Sharp edges found the hard way
 
+- **Every section with a horizontal entrance animation must clip.** The cards
+  slide in from ±30-50px; a section without `overflow-hidden` lets a card that
+  has not animated yet stick past the edge and scroll the whole page sideways.
+  Measure `documentElement.scrollWidth` *while scrolling*, not once — a section
+  only overflows while its animation is mid-flight.
+- **Scroll behaviour is a route-level rule** in `src/utils/ScrollBehaviour.tsx`.
+  Fragment links fire `popstate`, so react-router calls them POP; branch on the
+  hash *changing*, not on navigation type, or nav anchors silently do nothing.
+  Leave `history.scrollRestoration` alone — taking it over by hand measured
+  worse than the browser on every case that mattered.
 - **The 3D is decorative and must fail silently.** drei's `Environment` pulls
   its HDR from a CDN that is sometimes slow, blocked or down. The boundary in
   `PhoneScene` used to render the raw error in an absolutely-positioned red
@@ -69,6 +79,8 @@ job rejected the build. `check-claims.mjs` now asserts a rendered link uses
 - **The hero assets are heavy** — the two route-animation GIFs are ~40 MB
   together, which is most of the 73 MB image. They are the captain's artwork;
   do not re-encode them without asking, but know that is where the weight is.
+- **A `VITE_*` value only reaches the bundle if rendered markup reads it** —
+  see the rule above; the deploy check enforces it.
 - **`npm run build` did not pass on the source branch.** Unused locals and a
   troika typing error had to be fixed during the port; expect the same next time
   you pull from `GRIDGOv3`.

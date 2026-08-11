@@ -31,7 +31,7 @@ export const GRIDGO_APPS: GridgoApp[] = [
   {
     key: 'supplier',
     slug: 'gridgo-supplier',
-    name: 'GRIDGO Partner',
+    name: 'GRIDGO Supplier',
     audience: 'For print shops',
     whoItIsFor:
       'Install this one if you run a printing shop and want GRIDGO to send you work. List what you print, take the jobs you want, and upload proof as each stage finishes.',
@@ -46,8 +46,12 @@ export const GRIDGO_APPS: GridgoApp[] = [
   },
 ];
 
-const defaultMobileWebPort = '8088';
-const defaultCommunityUrl = 'https://m.me/GRIDGOPrintPH';
+/*
+ * The community CTA has no default. The Messenger handle the page shipped with
+ * resolves the same way a non-existent handle does, so there is nothing safe to
+ * fall back to — the CTA does not render until VITE_GRID_COMMUNITY_URL names a
+ * real destination.
+ */
 /**
  * Where print partners, operations and admin sign in. Overridden at build time
  * by VITE_DASHBOARD_URL — and it must stay referenced by rendered markup, or
@@ -55,57 +59,11 @@ const defaultCommunityUrl = 'https://m.me/GRIDGOPrintPH';
  */
 const defaultDashboardUrl = 'https://gridgo-dash.talasora.com';
 
-type LocationLike = Pick<
-  Location,
-  'protocol' | 'hostname' | 'port' | 'pathname' | 'search' | 'hash' | 'href'
->;
-
-export function getMobileWebUrl(
-  location: LocationLike,
-  port = defaultMobileWebPort,
-) {
-  const url = new URL(location.href);
-  url.port = port;
-  url.pathname = '/';
-  url.search = '';
-  url.hash = '';
-  return url.toString();
-}
-
-export function isMobileUserAgent(userAgent: string) {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    userAgent,
-  );
-}
-
-export function shouldRedirectToMobileWeb(
-  location: LocationLike,
-  userAgent: string,
-  port = defaultMobileWebPort,
-) {
-  const params = new URLSearchParams(location.search);
-  return (
-    isMobileUserAgent(userAgent) &&
-    location.port !== port &&
-    params.get('desktop') !== '1'
-  );
-}
-
-export function landingLinks(location: LocationLike) {
-  const mobileWebPort =
-    import.meta.env.VITE_MOBILE_WEB_PORT || defaultMobileWebPort;
-  // In production the port-based URL resolves to gridgo.talasora.com:8088,
-  // which nothing serves — VITE_MOBILE_WEB_URL points it somewhere real.
-  const mobileWebOverride = import.meta.env.VITE_MOBILE_WEB_URL?.trim();
+export function landingLinks() {
   const communityUrl =
-    import.meta.env.VITE_GRID_COMMUNITY_URL?.trim() || defaultCommunityUrl;
+    import.meta.env.VITE_GRID_COMMUNITY_URL?.trim() || null;
   const dashboardUrl =
     import.meta.env.VITE_DASHBOARD_URL?.trim() || defaultDashboardUrl;
 
-  return {
-    mobileWebUrl: mobileWebOverride || getMobileWebUrl(location, mobileWebPort),
-    communityUrl,
-    dashboardUrl,
-    mobileWebPort,
-  };
+  return { communityUrl, dashboardUrl };
 }

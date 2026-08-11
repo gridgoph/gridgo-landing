@@ -70,7 +70,7 @@ const links = sources.find((s) => s.file === 'utils/landingLinks.ts');
 assert(links, 'src/utils/landingLinks.ts should exist.');
 assert(
   links.text.includes('VITE_DASHBOARD_URL') &&
-    /dashboardUrl,/.test(links.text),
+    /return\s*\{[^}]*\bdashboardUrl\b/.test(links.text),
   'landingLinks() should resolve VITE_DASHBOARD_URL and expose it as dashboardUrl.',
 );
 assert(

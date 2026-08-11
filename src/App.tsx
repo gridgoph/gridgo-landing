@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import type { ForwardRefExoticComponent, HTMLAttributes, RefAttributes } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PhoneScene } from './components/PhoneScene';
@@ -214,7 +214,7 @@ function FeatureCard({ icon: Icon, title, desc }: { icon: AnimatedIconComponent,
 
 function FeaturesSection() {
   return (
-    <section id="features" className="min-h-screen bg-[#FFDE58] text-black py-20 relative z-10 flex flex-col justify-center">
+    <section id="features" className="min-h-screen bg-[#FFDE58] text-black py-20 relative z-10 flex flex-col justify-center overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 w-full">
         <h2 className="font-heading text-[36px] md:text-[42px] tracking-tight font-bold text-center mb-16">Features</h2>
 
@@ -255,7 +255,7 @@ function FeaturesSection() {
 
 function HowItWorksSection() {
   return (
-    <section id="process" className="min-h-screen bg-white dark:bg-black py-32 relative z-10 text-black dark:text-white flex flex-col justify-center">
+    <section id="process" className="min-h-screen bg-white dark:bg-black py-32 relative z-10 text-black dark:text-white flex flex-col justify-center overflow-hidden">
       <div className="max-w-6xl mx-auto px-6 w-full">
         <h2 className="text-4xl md:text-5xl font-bold text-center mb-24">How it Works</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-center">
@@ -313,7 +313,7 @@ function HowItWorksSection() {
           className="mt-32 w-full relative rounded-3xl overflow-hidden border border-black/10 dark:border-white/10 shadow-[0_0_50px_rgba(255,222,88,0.05)] aspect-[16/9] bg-black/5 dark:bg-white/5"
         >
           <iframe
-            src="https://www.youtube.com/embed/67Jrr34StKg?autoplay=1&mute=1&loop=1&playlist=67Jrr34StKg&controls=1&rel=0"
+            src="https://www.youtube.com/embed/XumhDPA8rB4?autoplay=1&mute=1&loop=1&playlist=XumhDPA8rB4&controls=1&rel=0"
             title="GRIDGO App Demo Walkthrough"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
@@ -327,7 +327,7 @@ function HowItWorksSection() {
 
 function SupportSection({ isDarkMode }: { isDarkMode?: boolean }) {
   return (
-    <section id="support" className="min-h-screen bg-map py-24 relative z-10" style={{ backgroundImage: `url(${isDarkMode ? "/GRIDGO_BG.png" : "/GRIDGO_BG_WHITE.png"})` }}>
+    <section id="support" className="min-h-screen bg-map py-24 relative z-10 overflow-hidden" style={{ backgroundImage: `url(${isDarkMode ? "/GRIDGO_BG.png" : "/GRIDGO_BG_WHITE.png"})` }}>
       <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-0 pointer-events-none dark:hidden" />
       <div className="max-w-6xl mx-auto px-6 relative z-10">
 
@@ -411,7 +411,7 @@ function SupportSection({ isDarkMode }: { isDarkMode?: boolean }) {
 
 function AboutSection({ isDarkMode }: { isDarkMode?: boolean }) {
   return (
-    <section id="about" className="min-h-screen bg-map py-32 relative z-10 flex flex-col justify-center" style={{ backgroundImage: `url(${isDarkMode ? "/GRIDGO_BG.png" : "/GRIDGO_BG_WHITE.png"})` }}>
+    <section id="about" className="min-h-screen bg-map py-32 relative z-10 flex flex-col justify-center overflow-hidden" style={{ backgroundImage: `url(${isDarkMode ? "/GRIDGO_BG.png" : "/GRIDGO_BG_WHITE.png"})` }}>
       <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-0 pointer-events-none dark:hidden" />
       <div className="max-w-[1100px] mx-auto px-8 w-full relative z-10">
         <h2 className="font-heading text-4xl md:text-[42px] font-bold text-center mb-24 tracking-tight">About Us</h2>
@@ -528,7 +528,7 @@ function TeamSection({ isDarkMode }: { isDarkMode?: boolean }) {
 }
 
 function BetaSection() {
-  const { mobileWebUrl, communityUrl } = landingLinks(window.location);
+  const { communityUrl, dashboardUrl } = landingLinks();
 
   return (
     <section id="download" className="min-h-[100vh] flex items-center justify-center relative z-10 py-20 px-8 overflow-hidden bg-gray-50 dark:bg-[#050505]">
@@ -554,27 +554,40 @@ function BetaSection() {
               Become a founding member of GRIDGO and have a <span className="text-[var(--color-primary)] font-medium">free printing service</span> delivered to your door step.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-10 w-[95%]">
-              <a
-                href={mobileWebUrl}
-                className="bg-white text-black font-bold py-3 px-3 rounded-full hover:bg-gray-200 transition-colors text-[13px] md:text-[13px]"
-              >
-                Access Mobile Web
-              </a>
+            {/*
+              Two destinations, both of which resolve: the install page and the
+              partner sign-in. The community CTA joins them only once a real
+              community URL is configured — see landingLinks().
+            */}
+            <div
+              className={`grid grid-cols-1 gap-3 mb-10 w-full ${
+                communityUrl ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
+              }`}
+            >
               <Link
                 to="/download"
-                className="bg-[var(--color-primary)] text-black font-bold py-3 px-3 rounded-full hover:bg-yellow-400 transition-colors text-[13px] md:text-[14px]"
+                className="flex items-center justify-center min-h-[44px] py-3 px-4 rounded-full bg-[var(--color-primary)] text-black font-bold text-[13px] md:text-[14px] hover:brightness-110 transition"
               >
-                Download APK
+                Download the App
               </Link>
               <a
-                href={communityUrl}
+                href={dashboardUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="border border-[var(--color-primary)] text-[var(--color-primary)] font-bold py-3 px-3 rounded-full hover:bg-[var(--color-primary)] hover:text-black transition-colors text-[13px] md:text-[14px]"
+                className="flex items-center justify-center min-h-[44px] py-3 px-4 rounded-full border border-black/20 dark:border-white/20 font-bold text-[13px] md:text-[14px] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition"
               >
-                Join GRID Community
+                Partner Dashboard
               </a>
+              {communityUrl && (
+                <a
+                  href={communityUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center min-h-[44px] py-3 px-4 rounded-full border border-[var(--color-primary)] text-[var(--color-primary)] font-bold text-[13px] md:text-[14px] hover:bg-[var(--color-primary)] hover:text-black transition"
+                >
+                  Join GRID Community
+                </a>
+              )}
             </div>
 
             <div className="flex flex-col items-center w-full">
@@ -614,7 +627,7 @@ function BetaSection() {
 }
 
 function FooterSection() {
-  const { dashboardUrl } = landingLinks(window.location);
+  const { dashboardUrl } = landingLinks();
 
   return (
     <footer className="bg-[#050505] text-white pt-24 pb-12 px-8 relative z-20 border-t border-white/5 font-sans">
@@ -675,8 +688,6 @@ function FooterSection() {
             <h4 className="text-[#666] text-[13px] lowercase font-mono">more</h4>
             <div className="flex flex-col gap-5">
               <a href="#about" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">ABOUT US</a>
-              <a href="#" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">PRIVACY POLICY</a>
-              <a href="#" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">TERMS OF SERVICE</a>
             </div>
           </div>
         </div>
@@ -713,7 +724,18 @@ function App() {
       <Navbar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
 
       {/* The 3D Parallax Canvas stays fixed in the background but is now hidden in the hero section */}
-      <PhoneScene isDarkMode={isDarkMode} />
+      {/*
+        The 3D layer needs its own Suspense boundary. Its GLB and drei's
+        environment map suspend while they load, and without a boundary here
+        that suspension reaches the router's boundary and unmounts the entire
+        page — navbar included. On remount the navbar's entrance animation
+        never re-ran, leaving it parked off-screen at opacity 0 for the rest of
+        the visit. Falling back to null lets the page render immediately and
+        the scene appear when it is ready.
+      */}
+      <Suspense fallback={null}>
+        <PhoneScene isDarkMode={isDarkMode} />
+      </Suspense>
 
       {/* Scrollable Content */}
       <div className="relative w-full">
