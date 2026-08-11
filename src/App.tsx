@@ -313,7 +313,7 @@ function HowItWorksSection() {
           className="mt-32 w-full relative rounded-3xl overflow-hidden border border-black/10 dark:border-white/10 shadow-[0_0_50px_rgba(255,222,88,0.05)] aspect-[16/9] bg-black/5 dark:bg-white/5"
         >
           <iframe
-            src="https://www.youtube.com/embed/67Jrr34StKg?autoplay=1&mute=1&loop=1&playlist=67Jrr34StKg&controls=1&rel=0"
+            src="https://www.youtube.com/embed/XumhDPA8rB4?autoplay=1&mute=1&loop=1&playlist=XumhDPA8rB4&controls=1&rel=0"
             title="GRIDGO App Demo Walkthrough"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
