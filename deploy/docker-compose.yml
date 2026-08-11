@@ -1,0 +1,37 @@
+# GRIDGO landing site — this file lives at ~/gridgo/landing/docker-compose.yml
+# on the server. `~/gridgo/bin/deploy.sh landing` pulls the image named here and
+# restarts the service.
+#
+# The reverse proxy reaches this container as host `gridgo-landing` on port 3000
+# over the `gridgo-edge` network, so the container name, the port and the
+# network are load-bearing — changing any of them makes the site unreachable.
+services:
+  gridgo-landing:
+    image: ${GRIDGO_LANDING_IMAGE:-ghcr.io/rqms40/gridgo-landing:latest}
+    container_name: gridgo-landing
+    restart: unless-stopped
+    networks:
+      - gridgo-edge
+    # No `ports:` — the proxy reaches this container over the gridgo-edge
+    # network. Publishing to the host would expose it around the proxy.
+    volumes:
+      # The three signed APKs and their JSON sidecars, uploaded by each app's
+      # own build. Read-only: nothing on the landing site ever writes here.
+      # Relative to this compose file at ~/gridgo/landing/, so it resolves to
+      # ~/gridgo/downloads whoever the deploy user is.
+      - ../downloads:/srv/gridgo-downloads:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/healthz"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  gridgo-edge:
+    external: true

@@ -1,0 +1,210 @@
+name: build & deploy
+
+# Which trigger earns which output, deliberately:
+#
+#   pull_request      → checks + a throwaway image build. No publish, no deploy.
+#                       A PR is untrusted code; publishing or deploying from one
+#                       would let any PR replace gridgo.talasora.com.
+#   push to main      → checks, publish to GHCR, deploy. This is the reviewed,
+#                       merged state, and the only automatic path to production.
+#   workflow_dispatch → checks + publish always; deploy only when the operator
+#                       explicitly sets deploy=true. Lets a branch be published
+#                       and proven without arming production by accident.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy the published image to gridgo.talasora.com'
+        type: boolean
+        default: false
+
+concurrency:
+  group: gridgo-landing-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  # These are inlined into the bundle by Vite at build time, so they are build
+  # args below — setting them on the running container would do nothing.
+  VITE_API_URL: https://gridgo-api.talasora.com/api
+  VITE_DASHBOARD_URL: https://gridgo-dash.talasora.com
+  # The GRIDGO API has no POST /support-tickets endpoint yet. Flip to 'true'
+  # here when it ships, so the public page stops showing "not open yet".
+  VITE_SUPPORT_TICKETS_ENABLED: 'false'
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  publish:
+    needs: checks
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve image name
+        id: meta
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "image=${REGISTRY}/$(printf '%s' "$REPOSITORY" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:latest
+            ${{ steps.meta.outputs.image }}:${{ github.sha }}
+          build-args: |
+            VITE_API_URL=${{ env.VITE_API_URL }}
+            VITE_DASHBOARD_URL=${{ env.VITE_DASHBOARD_URL }}
+            VITE_SUPPORT_TICKETS_ENABLED=${{ env.VITE_SUPPORT_TICKETS_ENABLED }}
+            VITE_GRID_COMMUNITY_URL=${{ vars.GRID_COMMUNITY_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Assert the deployed API URL is really in the built bundle
+        run: |
+          set -euo pipefail
+          image='${{ steps.meta.outputs.image }}:${{ github.sha }}'
+          docker create --name assert "$image"
+          rm -rf ./_dist && mkdir -p ./_dist
+          docker cp assert:/usr/share/nginx/html/. ./_dist/
+          docker rm assert >/dev/null
+
+          # Vite inlines VITE_* at build time. If this is missing, the site was
+          # built pointing somewhere else and would call the wrong API from every
+          # visitor's browser — a failure that looks green in CI.
+          if ! grep -rqF "${VITE_API_URL}" ./_dist; then
+            echo "::error::${VITE_API_URL} is not present in the built output"
+            exit 1
+          fi
+          if ! grep -rqF "${VITE_DASHBOARD_URL}" ./_dist; then
+            echo "::error::${VITE_DASHBOARD_URL} is not present in the built output"
+            exit 1
+          fi
+          # The variable NAME must not survive into the bundle — if it does, the
+          # value was read at runtime rather than inlined.
+          if grep -rqF 'VITE_API_URL' ./_dist; then
+            echo "::error::VITE_API_URL appears literally in the bundle; it was not inlined"
+            exit 1
+          fi
+          echo "Deployed API and dashboard URLs confirmed in the built output."
+
+      - name: Smoke-test the published image
+        run: |
+          set -euo pipefail
+          image='${{ steps.meta.outputs.image }}:${{ github.sha }}'
+          docker run -d --name smoke -p 39300:3000 "$image"
+          for i in $(seq 1 30); do
+            if curl -fsS -m 2 http://127.0.0.1:39300/healthz >/dev/null; then break; fi
+            sleep 1
+          done
+
+          test "$(docker exec smoke id -u)" != "0" || { echo "::error::container runs as root"; exit 1; }
+          curl -fsS http://127.0.0.1:39300/healthz | grep -q ok
+
+          # Every route must resolve through the SPA fallback, including a deep
+          # link that only react-router knows about.
+          for route in / /support /download /download?x=1; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:39300${route}")
+            test "$code" = "200" || { echo "::error::route ${route} returned ${code}"; exit 1; }
+          done
+
+          # ...but a missing static asset must still 404 rather than silently
+          # serving index.html.
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:39300/assets/nope.js)
+          test "$code" = "404" || { echo "::error::missing asset returned ${code}, expected 404"; exit 1; }
+
+          # No HTTPS redirect: Cloudflare Flexible mode in front would loop forever.
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:39300/)
+          test "$code" = "200" || { echo "::error::root returned ${code}; a redirect here would loop behind Cloudflare Flexible"; exit 1; }
+
+          docker rm -f smoke >/dev/null
+          echo "Image smoke test passed."
+
+  deploy:
+    needs: publish
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.deploy)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    environment: production
+    steps:
+      - name: Trigger the restricted deploy command
+        # Secrets go through env, never interpolated into the shell text: a
+        # value containing shell metacharacters would otherwise be executed.
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+
+          # Verify the host key from the secret. Accepting any host key would let
+          # anyone able to intercept this connection collect the deploy key.
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          # The server grants CI no shell: this key runs exactly one command,
+          # which accepts the single word `landing`. The registry is private, so
+          # the deploy command reads a run-scoped token from stdin to pull.
+          printf '%s' "$REGISTRY_TOKEN" | ssh \
+            -i ~/.ssh/deploy_key \
+            -o UserKnownHostsFile=~/.ssh/known_hosts \
+            -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes \
+            -o ConnectTimeout=20 \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" landing
+
+      - name: Confirm the site is actually serving
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -m 15 -w '%{http_code}' https://gridgo.talasora.com/ || echo 000)
+            echo "attempt ${i}: HTTP ${code}"
+            if [ "$code" = "200" ]; then
+              echo "gridgo.talasora.com is serving."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::gridgo.talasora.com did not return 200 after the deploy"
+          exit 1
