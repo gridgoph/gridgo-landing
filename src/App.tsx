@@ -614,6 +614,8 @@ function BetaSection() {
 }
 
 function FooterSection() {
+  const { dashboardUrl } = landingLinks(window.location);
+
   return (
     <footer className="bg-[#050505] text-white pt-24 pb-12 px-8 relative z-20 border-t border-white/5 font-sans">
       <div className="max-w-[1100px] mx-auto flex flex-col md:flex-row justify-between gap-16 mb-24">
@@ -665,6 +667,7 @@ function FooterSection() {
               <a href="#process" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">HOW IT WORKS</a>
               <a href="#features" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">FEATURES</a>
               <Link to="/download" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">DOWNLOAD APP</Link>
+              <a href={dashboardUrl} target="_blank" rel="noopener noreferrer" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">PARTNER DASHBOARD</a>
             </div>
           </div>
 

@@ -37,6 +37,13 @@ anything that describes how GRIDGO works, and keep the money detail out of it.
 section — `scripts/check-download-page.mjs` enforces that, along with the
 details a person needs before installing software from the open web.
 
+**A `VITE_*` value only reaches the bundle if rendered markup reads it.** The
+deploy workflow refuses to publish a bundle missing the deployed API and
+dashboard URLs, and a re-port once dropped the dashboard link entirely — the
+constant survived, nothing rendered it, Vite inlined nothing, and the publish
+job rejected the build. `check-claims.mjs` now asserts a rendered link uses
+`dashboardUrl`.
+
 ## Sharp edges found the hard way
 
 - **The 3D is decorative and must fail silently.** drei's `Environment` pulls
