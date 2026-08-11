@@ -37,8 +37,10 @@ as an honest "not published yet" state rather than a dead link.
 |---|---|---|
 | `VITE_API_URL` | `https://gridgo-api.talasora.com/api` | API base for the support form |
 | `VITE_DASHBOARD_URL` | `https://gridgo-dash.talasora.com` | Partner dashboard link |
-| `VITE_GRID_COMMUNITY_URL` | the page's own default | Community CTA target |
-| `VITE_MOBILE_WEB_URL` | *(derived)* | "Access Mobile Web" target; without it the link resolves to port 8088, which nothing serves |
+| `VITE_GRID_COMMUNITY_URL` | *(none)* | Community CTA target; the CTA is not rendered while unset |
+
+There is no mobile-web build and no configuration for one — the apps are the
+mobile experience, and `/download` is how people get them.
 
 The production values live in `.github/workflows/deploy.yml`.
 

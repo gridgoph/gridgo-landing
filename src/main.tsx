@@ -3,11 +3,13 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import { LandingRoute, SupportRoute, DownloadRoute } from './routes'
+import { ScrollBehaviour } from './utils/ScrollBehaviour'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
-      <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <ScrollBehaviour />
+      <Suspense fallback={<div className="min-h-screen bg-white dark:bg-black" />}>
         <Routes>
           <Route path="/" element={<LandingRoute />} />
           <Route path="/support" element={<SupportRoute />} />

@@ -30,9 +30,35 @@ function AnimatedEcosystemIcon({ icon: Icon, size = 28 }: { icon: AnimatedIconCo
   return <Icon ref={iconRef} size={size} />;
 }
 
+/**
+ * The cards only sit side by side from `lg` up. Below that they stack full
+ * width, where scaling one up has nothing to compare it against and simply
+ * pushes it past the viewport edge — which scrolled the whole page sideways on
+ * a phone. Emphasis is for the three-up layout only.
+ */
+function useSideBySide() {
+  const query = '(min-width: 1024px)';
+  const [sideBySide, setSideBySide] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const update = () => setSideBySide(mql.matches);
+    update();
+    mql.addEventListener('change', update);
+    return () => mql.removeEventListener('change', update);
+  }, []);
+
+  return sideBySide;
+}
+
 export function EcosystemSection({ isDarkMode: _isDarkMode }: { isDarkMode?: boolean }) {
   const [activeIndex, setActiveIndex] = useState(1);
   const [isHovered, setIsHovered] = useState(false);
+  const sideBySide = useSideBySide();
+  const emphasis = (index: number) =>
+    sideBySide && activeIndex === index ? 1.05 : 1;
 
   useEffect(() => {
     if (isHovered) return;
@@ -43,7 +69,7 @@ export function EcosystemSection({ isDarkMode: _isDarkMode }: { isDarkMode?: boo
   }, [isHovered]);
 
   return (
-    <section id="ecosystem" className="min-h-screen bg-white dark:bg-[#050505] py-32 relative z-10 text-black dark:text-white flex flex-col justify-center">
+    <section id="ecosystem" className="min-h-screen bg-white dark:bg-[#050505] py-32 relative z-10 text-black dark:text-white flex flex-col justify-center overflow-hidden">
       <div className="max-w-[1200px] mx-auto px-6 w-full">
         <motion.div
           initial={{ opacity: 0, y: 30, filter: 'blur(15px)' }}
@@ -71,7 +97,7 @@ export function EcosystemSection({ isDarkMode: _isDarkMode }: { isDarkMode?: boo
               scale: { duration: 0.4, ease: 'easeInOut' }
             }}
             viewport={{ once: true, margin: '-50px' }}
-            animate={{ scale: activeIndex === 0 ? 1.05 : 1 }}
+            animate={{ scale: emphasis(0) }}
             onMouseEnter={() => { setIsHovered(true); setActiveIndex(0); }}
             onMouseLeave={() => setIsHovered(false)}
             className={`rounded-3xl border border-black/10 dark:border-white/10 p-10 md:p-14 bg-black/[0.02] dark:bg-white/[0.02] flex flex-col hover:border-black/20 dark:hover:border-white/20 transition-all duration-500 origin-center relative ${activeIndex === 0 ? 'shadow-2xl z-20' : 'z-10'}`}
@@ -110,7 +136,7 @@ export function EcosystemSection({ isDarkMode: _isDarkMode }: { isDarkMode?: boo
               scale: { duration: 0.4, ease: 'easeInOut' }
             }}
             viewport={{ once: true, margin: '-50px' }}
-            animate={{ scale: activeIndex === 1 ? 1.05 : 1 }}
+            animate={{ scale: emphasis(1) }}
             onMouseEnter={() => { setIsHovered(true); setActiveIndex(1); }}
             onMouseLeave={() => setIsHovered(false)}
             className={`rounded-3xl border p-10 md:p-14 bg-[var(--color-primary)]/[0.05] flex flex-col relative overflow-hidden group transition-all duration-500 origin-center ${activeIndex === 1 ? 'border-[var(--color-primary)]/80 shadow-[0_0_40px_rgba(255,222,88,0.15)] z-20' : 'border-[var(--color-primary)]/40 hover:border-[var(--color-primary)]/80 z-10'}`}
@@ -157,7 +183,7 @@ export function EcosystemSection({ isDarkMode: _isDarkMode }: { isDarkMode?: boo
               scale: { duration: 0.4, ease: 'easeInOut' }
             }}
             viewport={{ once: true, margin: '-50px' }}
-            animate={{ scale: activeIndex === 2 ? 1.05 : 1 }}
+            animate={{ scale: emphasis(2) }}
             onMouseEnter={() => { setIsHovered(true); setActiveIndex(2); }}
             onMouseLeave={() => setIsHovered(false)}
             className={`rounded-3xl border border-black/10 dark:border-white/10 p-10 bg-black/[0.02] dark:bg-white/[0.02] flex flex-col hover:border-black/20 dark:hover:border-white/20 transition-all duration-500 origin-center relative ${activeIndex === 2 ? 'shadow-2xl z-20' : 'z-10'}`}
