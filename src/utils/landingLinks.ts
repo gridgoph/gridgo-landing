@@ -48,6 +48,12 @@ export const GRIDGO_APPS: GridgoApp[] = [
 
 const defaultMobileWebPort = '8088';
 const defaultCommunityUrl = 'https://m.me/GRIDGOPrintPH';
+/**
+ * Where print partners, operations and admin sign in. Overridden at build time
+ * by VITE_DASHBOARD_URL — and it must stay referenced by rendered markup, or
+ * Vite has nothing to inline the value into and the deploy check fails.
+ */
+const defaultDashboardUrl = 'https://gridgo-dash.talasora.com';
 
 type LocationLike = Pick<
   Location,
@@ -93,10 +99,13 @@ export function landingLinks(location: LocationLike) {
   const mobileWebOverride = import.meta.env.VITE_MOBILE_WEB_URL?.trim();
   const communityUrl =
     import.meta.env.VITE_GRID_COMMUNITY_URL?.trim() || defaultCommunityUrl;
+  const dashboardUrl =
+    import.meta.env.VITE_DASHBOARD_URL?.trim() || defaultDashboardUrl;
 
   return {
     mobileWebUrl: mobileWebOverride || getMobileWebUrl(location, mobileWebPort),
     communityUrl,
+    dashboardUrl,
     mobileWebPort,
   };
 }

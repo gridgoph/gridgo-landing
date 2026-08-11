@@ -61,6 +61,29 @@ assert(
   allSource.includes('gridgo-api.talasora.com'),
   'The API base should point at gridgo-api.talasora.com.',
 );
+
+// The deploy workflow refuses to publish a bundle that does not contain the
+// deployed dashboard URL. Vite only inlines a VITE_* value where the source
+// actually reads it, so the constant existing is not enough — it has to reach
+// rendered markup. This is exactly how the link was lost once already.
+const links = sources.find((s) => s.file === 'utils/landingLinks.ts');
+assert(links, 'src/utils/landingLinks.ts should exist.');
+assert(
+  links.text.includes('VITE_DASHBOARD_URL') &&
+    /dashboardUrl,/.test(links.text),
+  'landingLinks() should resolve VITE_DASHBOARD_URL and expose it as dashboardUrl.',
+);
+assert(
+  allSource.includes('gridgo-dash.talasora.com'),
+  'The dashboard URL should default to gridgo-dash.talasora.com.',
+);
+const rendersDashboard = sources.some(
+  (s) => s.file !== 'utils/landingLinks.ts' && /href=\{dashboardUrl\}/.test(s.text),
+);
+assert(
+  rendersDashboard,
+  'Some rendered link must use dashboardUrl, or Vite has nothing to inline the deployed URL into and the deploy check fails.',
+);
 for (const slug of ['gridgo-client', 'gridgo-supplier', 'gridgo-rider']) {
   assert(allSource.includes(slug), `The download page should name the ${slug} app.`);
 }
