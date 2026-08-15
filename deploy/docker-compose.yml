@@ -9,7 +9,7 @@ name: gridgo-landing
 
 services:
   gridgo-landing:
-    image: ${GRIDGO_LANDING_IMAGE:-ghcr.io/rqms40/gridgo-landing:latest}
+    image: ${GRIDGO_LANDING_IMAGE:-ghcr.io/gridgoph/gridgo-landing:latest}
     container_name: gridgo-landing
     restart: unless-stopped
     networks:
