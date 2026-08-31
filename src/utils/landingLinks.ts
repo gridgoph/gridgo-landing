@@ -17,6 +17,12 @@ export type GridgoApp = {
   audience: string;
   /** Plain language, for someone who does not know which app is theirs. */
   whoItIsFor: string;
+  /**
+   * Public path to this app's launcher mark. The files under
+   * `public/app-icons/` are the same 3×3 each Android build paints on
+   * the home screen, not a generic phone glyph.
+   */
+  icon: string;
 };
 
 export const GRIDGO_APPS: GridgoApp[] = [
@@ -25,6 +31,7 @@ export const GRIDGO_APPS: GridgoApp[] = [
     slug: 'gridgo-client',
     name: 'GRIDGO',
     audience: 'For customers',
+    icon: '/app-icons/gridgo-client.png',
     whoItIsFor:
       'Install this one if you want something printed — flyers, tarpaulins, shirts, plaques, anything in the catalogue. Upload your design, and it arrives at your door.',
   },
@@ -33,6 +40,7 @@ export const GRIDGO_APPS: GridgoApp[] = [
     slug: 'gridgo-supplier',
     name: 'GRIDGO Supplier',
     audience: 'For print shops',
+    icon: '/app-icons/gridgo-supplier.png',
     whoItIsFor:
       'Install this one if you run a printing shop and want GRIDGO to send you work. List what you print, take the jobs you want, and upload proof as each stage finishes.',
   },
@@ -41,6 +49,7 @@ export const GRIDGO_APPS: GridgoApp[] = [
     slug: 'gridgo-rider',
     name: 'GRIDGO Rider',
     audience: 'For riders',
+    icon: '/app-icons/gridgo-rider.png',
     whoItIsFor:
       'Install this one if you deliver on a motorcycle. Accept a run, check the order at the shop before you carry it, and record the handover when you drop it off.',
   },

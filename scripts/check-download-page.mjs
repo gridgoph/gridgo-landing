@@ -3,7 +3,7 @@
  * has to reach /download rather than scrolling to a section.
  */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -41,8 +41,21 @@ assert(
 // ── The three apps ────────────────────────────────────────────────────────
 for (const slug of ['gridgo-client', 'gridgo-supplier', 'gridgo-rider']) {
   assert(links.includes(slug), `landingLinks should describe ${slug}.`);
+  assert(
+    links.includes(`/app-icons/${slug}.png`),
+    `${slug} should name its launcher mark.`,
+  );
+  assert(
+    existsSync(resolve(scriptDir, `../public/app-icons/${slug}.png`)),
+    `public/app-icons/${slug}.png should be the launcher mark served on /download.`,
+  );
 }
 assert(page.includes('GRIDGO_APPS'), 'The download page should render all three apps.');
+assert(page.includes('app.icon'), 'Each download card should render that app’s launcher mark.');
+assert(
+  !/\bSmartphone\b/.test(page),
+  'Download cards should show each app’s launcher mark, not a generic phone glyph.',
+);
 
 // ── Details a person needs before installing from the open web ────────────
 assert(page.includes('sha256'), 'The download page should show the SHA-256 of each build.');
