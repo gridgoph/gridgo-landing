@@ -40,7 +40,7 @@ export const GRIDGO_APPS: GridgoApp[] = [
     slug: 'gridgo-supplier',
     name: 'GRIDGO Supplier',
     audience: 'For print shops',
-    icon: '/app-icons/gridgo-supplier.png',
+    icon: '/app-icons/gridgo-supplier-lockup.png',
     whoItIsFor:
       'Install this one if you run a printing shop and want GRIDGO to send you work. List what you print, take the jobs you want, and upload proof as each stage finishes.',
   },
@@ -49,7 +49,7 @@ export const GRIDGO_APPS: GridgoApp[] = [
     slug: 'gridgo-rider',
     name: 'GRIDGO Rider',
     audience: 'For riders',
-    icon: '/app-icons/gridgo-rider.png',
+    icon: '/app-icons/gridgo-rider-lockup.png',
     whoItIsFor:
       'Install this one if you deliver on a motorcycle. Accept a run, check the order at the shop before you carry it, and record the handover when you drop it off.',
   },

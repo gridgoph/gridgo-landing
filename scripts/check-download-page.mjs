@@ -41,13 +41,20 @@ assert(
 // ── The three apps ────────────────────────────────────────────────────────
 for (const slug of ['gridgo-client', 'gridgo-supplier', 'gridgo-rider']) {
   assert(links.includes(slug), `landingLinks should describe ${slug}.`);
+}
+const iconFiles = [
+  'gridgo-client.png',
+  'gridgo-supplier-lockup.png',
+  'gridgo-rider-lockup.png',
+];
+for (const name of iconFiles) {
   assert(
-    links.includes(`/app-icons/${slug}.png`),
-    `${slug} should name its launcher mark.`,
+    links.includes(`/app-icons/${name}`),
+    `landingLinks should name /app-icons/${name}.`,
   );
   assert(
-    existsSync(resolve(scriptDir, `../public/app-icons/${slug}.png`)),
-    `public/app-icons/${slug}.png should be the launcher mark served on /download.`,
+    existsSync(resolve(scriptDir, `../public/app-icons/${name}`)),
+    `public/app-icons/${name} should be the launcher tile served on /download.`,
   );
 }
 assert(page.includes('GRIDGO_APPS'), 'The download page should render all three apps.');
