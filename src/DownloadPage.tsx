@@ -7,7 +7,6 @@ import {
   Download,
   Moon,
   ShieldCheck,
-  Smartphone,
   Sun,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -104,15 +103,17 @@ function AppCard({ app, index, featured }: { app: GridgoApp; index: number; feat
       )}
 
       <div className="relative z-10 flex flex-col h-full">
-        <div
-          className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-7 ${
+        <img
+          src={app.icon}
+          alt=""
+          width={56}
+          height={56}
+          className={`w-14 h-14 rounded-2xl mb-7 ${
             featured
-              ? 'bg-[var(--color-primary)] text-black shadow-[0_0_20px_rgba(255,222,88,0.3)]'
-              : 'bg-black/10 dark:bg-white/10 border border-black/10 dark:border-white/10 text-black dark:text-white'
+              ? 'shadow-[0_0_20px_rgba(255,222,88,0.3)] ring-1 ring-[var(--color-primary)]/40'
+              : 'ring-1 ring-black/10 dark:ring-white/10'
           }`}
-        >
-          <Smartphone size={24} strokeWidth={1.75} />
-        </div>
+        />
 
         <p className="text-[10px] tracking-[0.35em] uppercase text-[var(--color-primary)] font-bold mb-3">
           {app.audience}
