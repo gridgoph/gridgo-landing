@@ -18,9 +18,9 @@ export type GridgoApp = {
   /** Plain language, for someone who does not know which app is theirs. */
   whoItIsFor: string;
   /**
-   * Public path to this app's launcher mark. The files under
-   * `public/app-icons/` are the same 3×3 each Android build paints on
-   * the home screen, not a generic phone glyph.
+   * Public path to this app's home-screen icon. Client uses the 3×3
+   * mark; Supplier and Rider use the GRIDGO wordmark lockup with the
+   * role line, matching the tiles on the phone.
    */
   icon: string;
 };
