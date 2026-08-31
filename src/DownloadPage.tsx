@@ -106,9 +106,9 @@ function AppCard({ app, index, featured }: { app: GridgoApp; index: number; feat
         <img
           src={app.icon}
           alt=""
-          width={56}
-          height={56}
-          className={`w-14 h-14 rounded-2xl mb-7 ${
+          width={72}
+          height={72}
+          className={`w-[72px] h-[72px] rounded-2xl mb-7 ${
             featured
               ? 'shadow-[0_0_20px_rgba(255,222,88,0.3)] ring-1 ring-[var(--color-primary)]/40'
               : 'ring-1 ring-black/10 dark:ring-white/10'
