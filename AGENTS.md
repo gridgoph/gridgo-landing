@@ -73,7 +73,8 @@ job rejected the build. `check-claims.mjs` now asserts a rendered link uses
   `window.innerWidth` inflates under mobile emulation and hides the bug.
 - **The hero depends on third-party origins** (`raw.githack.com`,
   `cdn.jsdelivr.net` for drei's environment map and troika's font, plus the
-  YouTube embed). If they are blocked the scene degrades rather than failing.
+  How it Works YouTube walkthroughs). If they are blocked the scene degrades
+  rather than failing.
 - Software WebGL takes ~1s to first paint. Browser checks need a real settle
   wait or they screenshot a black page and call it a pass.
 - **The hero assets are heavy** — the two route-animation GIFs are ~40 MB
