@@ -2,8 +2,9 @@
 
 GRIDGO's public landing site — **https://gridgo.talasora.com**
 
-It does three jobs: explain what GRIDGO is and how it actually works, hand
-people the Android apps at `/download`, and point them at support at `/support`.
+It does three public jobs: explain what GRIDGO is and how it actually works,
+hand people the Android apps at `/download`, and point them at support at
+`/support`. Operators work tickets at `/desk`.
 
 Related surfaces: the dashboard is **gridgo-dash.talasora.com**, the API is
 **gridgo-api.talasora.com**.
@@ -35,7 +36,7 @@ as an honest "not published yet" state rather than a dead link.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `VITE_API_URL` | `https://gridgo-api.talasora.com/api` | API base for the support form |
+| `VITE_API_URL` | `https://gridgo-api.talasora.com` | API origin for `/support` and `/desk` (no trailing `/api`) |
 | `VITE_DASHBOARD_URL` | `https://gridgo-dash.talasora.com` | Partner dashboard link |
 | `VITE_GRID_COMMUNITY_URL` | *(none)* | Community CTA target; the CTA is not rendered while unset |
 
@@ -116,6 +117,7 @@ The container runs as uid 101 and never as root.
 curl -sI https://gridgo.talasora.com/          # 200, no redirect
 curl -s  https://gridgo.talasora.com/healthz   # ok
 curl -sI https://gridgo.talasora.com/download  # 200 (SPA fallback)
+curl -sI https://gridgo.talasora.com/desk      # 200 (SPA fallback)
 ```
 
 ### Rolling back

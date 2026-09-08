@@ -146,7 +146,7 @@ export function EcosystemSection({ isDarkMode: _isDarkMode }: { isDarkMode?: boo
             <div className="w-16 h-16 rounded-2xl bg-[var(--color-primary)] flex items-center justify-center mb-8 shadow-[0_0_20px_rgba(255,222,88,0.3)] text-black relative z-10">
               <AnimatedEcosystemIcon icon={BriefcaseBusinessIcon} size={28} />
             </div>
-            <h3 className="text-3xl font-bold mb-4 tracking-tight relative z-10">GRIDGO Businesses</h3>
+            <h3 className="text-3xl font-bold mb-4 tracking-tight relative z-10">GRIDGO Organizations</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed text-base relative z-10">
               One centralized platform for all corporate printing needs—from signages to apparel.
             </p>
