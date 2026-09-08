@@ -29,7 +29,7 @@ env:
   REGISTRY: ghcr.io
   # These are inlined into the bundle by Vite at build time, so they are build
   # args below — setting them on the running container would do nothing.
-  VITE_API_URL: https://gridgo-api.talasora.com/api
+  VITE_API_URL: https://gridgo-api.talasora.com
   VITE_DASHBOARD_URL: https://gridgo-dash.talasora.com
 
 jobs:
@@ -130,7 +130,7 @@ jobs:
 
           # Every route must resolve through the SPA fallback, including a deep
           # link that only react-router knows about.
-          for route in / /support /download /download?x=1; do
+          for route in / /support /download /download?x=1 /desk; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:39300${route}")
             test "$code" = "200" || { echo "::error::route ${route} returned ${code}"; exit 1; }
           done

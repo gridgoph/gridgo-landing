@@ -36,3 +36,11 @@ assert(
   !support.includes('192.168.') && !support.includes('localhost'),
   'The support page must not point at an address from the legacy codebase.',
 );
+assert(
+  !support.includes('gridgo-api.talasora.com/api'),
+  'The support form must not post to gridgo-api.talasora.com/api.',
+);
+assert(
+  support.includes('apiBaseUrl'),
+  'The support form should use the shared API origin helper.',
+);

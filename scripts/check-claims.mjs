@@ -61,6 +61,10 @@ assert(
   allSource.includes('gridgo-api.talasora.com'),
   'The API base should point at gridgo-api.talasora.com.',
 );
+forbid(
+  /gridgo-api\.talasora\.com\/api/,
+  'The API origin is gridgo-api.talasora.com with no trailing /api.',
+);
 
 // The deploy workflow refuses to publish a bundle that does not contain the
 // deployed dashboard URL. Vite only inlines a VITE_* value where the source

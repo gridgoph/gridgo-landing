@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** GRIDGO API base, including the `/api` prefix. */
+  /** GRIDGO API origin. No trailing `/api` — the live API serves `/support-tickets` at the origin. */
   readonly VITE_API_URL?: string;
   /** Partner + operations dashboard. */
   readonly VITE_DASHBOARD_URL?: string;

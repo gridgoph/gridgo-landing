@@ -136,12 +136,12 @@ export function HowItWorksVideos() {
   );
 
   useEffect(() => {
-    if (playing) return;
+    if (playing || reduceMotion) return;
     const timer = setInterval(() => {
       go(1);
     }, 5000);
     return () => clearInterval(timer);
-  }, [go, playing]);
+  }, [go, playing, reduceMotion]);
 
   return (
     <div id="how-it-works-videos" className="mt-32 relative max-w-5xl mx-auto px-6 overflow-hidden">

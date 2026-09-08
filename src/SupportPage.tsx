@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { apiBaseUrl } from './utils/apiBase';
 import { useTheme } from './utils/useTheme';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'https://gridgo-api.talasora.com/api';
 const randomCaptchaNumber = () => Math.floor(Math.random() * 10) + 1;
 
 export function SupportPage() {
@@ -48,7 +48,12 @@ export function SupportPage() {
     }
 
     // Rate Limiting
-    const lastSubmission = localStorage.getItem('lastTicketSubmission');
+    let lastSubmission: string | null = null;
+    try {
+      lastSubmission = localStorage.getItem('lastTicketSubmission');
+    } catch {
+      // Private windows refuse storage; skip the client-side cooldown.
+    }
     if (lastSubmission && Date.now() - parseInt(lastSubmission) < 60000) {
       setStatus('error');
       const secondsLeft = Math.ceil((60000 - (Date.now() - parseInt(lastSubmission))) / 1000);
@@ -59,7 +64,7 @@ export function SupportPage() {
     setStatus('loading');
 
     try {
-      const response = await fetch(`${API_URL}/support-tickets`, {
+      const response = await fetch(`${apiBaseUrl}/support-tickets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +80,11 @@ export function SupportPage() {
       setStatus('success');
       setFormData({ name: '', email: '', subject: '', message: '' });
       generateNewCaptcha();
-      localStorage.setItem('lastTicketSubmission', Date.now().toString());
+      try {
+        localStorage.setItem('lastTicketSubmission', Date.now().toString());
+      } catch {
+        // Private windows refuse storage; the ticket still submitted.
+      }
     } catch (error: unknown) {
       console.error('Submission error:', error);
       setStatus('error');
@@ -147,7 +156,7 @@ export function SupportPage() {
                     required
                     value={formData.name}
                     onChange={handleChange}
-                    className="bg-white dark:bg-white/50 dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-black dark:text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                    className="bg-white text-black placeholder-gray-500 border border-black/10 dark:border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
                     placeholder="John Doe"
                   />
                 </div>
@@ -160,7 +169,7 @@ export function SupportPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="bg-white dark:bg-white/50 dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-black dark:text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                    className="bg-white text-black placeholder-gray-500 border border-black/10 dark:border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
                     placeholder="john@example.com"
                   />
                 </div>
@@ -175,7 +184,7 @@ export function SupportPage() {
                   required
                   value={formData.subject}
                   onChange={handleChange}
-                  className="bg-white dark:bg-white/50 dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-black dark:text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                  className="bg-white text-black placeholder-gray-500 border border-black/10 dark:border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
                   placeholder="E.g. Issue with order #1234"
                 />
               </div>
@@ -189,7 +198,7 @@ export function SupportPage() {
                   rows={5}
                   value={formData.message}
                   onChange={handleChange}
-                  className="bg-white dark:bg-white/50 dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-black dark:text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all resize-none"
+                  className="bg-white text-black placeholder-gray-500 border border-black/10 dark:border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all resize-none"
                   placeholder="Please describe your issue or concern in detail..."
                 />
               </div>
@@ -206,7 +215,7 @@ export function SupportPage() {
                   required
                   value={userCaptchaInput}
                   onChange={(e) => setUserCaptchaInput(e.target.value)}
-                  className="bg-white dark:bg-white/50 dark:bg-black/50 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-black dark:text-white placeholder-gray-500 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                  className="bg-white text-black placeholder-gray-500 border border-black/10 dark:border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
                   placeholder="Enter the answer..."
                 />
               </div>

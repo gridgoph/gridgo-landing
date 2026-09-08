@@ -13,7 +13,10 @@ and `@react-three/fiber` + `drei` + `three` for the fixed 3D layer. Routing is
 `react-router-dom`. See `package.json` for the commands; `npm test` runs the
 check scripts under `scripts/`.
 
-Three routes, all in `src/routes.tsx`: `/` (landing), `/support`, `/download`.
+Four routes, all in `src/routes.tsx`: `/` (landing), `/support`, `/download`,
+`/desk` (ticketing desk). Tickets live in GRIDGO Postgres via **gridgo-api**.
+Do not add a sidecar Express/Supabase process — production landing is static
+nginx, and CI deploy only runs the word `landing`.
 
 **Light and dark are both real.** The theme is a `dark` class on `<html>` plus a
 `theme` key in localStorage, owned by `src/utils/useTheme.ts` and shared by every
@@ -36,6 +39,13 @@ anything that describes how GRIDGO works, and keep the money detail out of it.
 **Every Download affordance routes to `/download`**, never to the `#download`
 section — `scripts/check-download-page.mjs` enforces that, along with the
 details a person needs before installing software from the open web.
+
+**`VITE_API_URL` is the API origin, with no trailing `/api`.** Production is
+`https://gridgo-api.talasora.com`. The live API serves `/support-tickets` (and
+`/api/support-tickets`). Dev may use `VITE_API_URL=/api` with the Vite proxy
+to `:8787`, which must not strip `/api`. Support form fields stay white in
+dark mode so typed text is readable. `/desk` is the operator desk; it is not
+linked from the public nav.
 
 **A `VITE_*` value only reaches the bundle if rendered markup reads it.** The
 deploy workflow refuses to publish a bundle missing the deployed API and

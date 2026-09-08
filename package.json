@@ -7,11 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "npm run test:community-cta && npm run test:video && npm run test:support-copy && npm run test:download && npm run test:claims",
+    "test": "npm run test:community-cta && npm run test:video && npm run test:support-copy && npm run test:download && npm run test:claims && npm run test:desk",
     "test:community-cta": "node scripts/check-community-cta.mjs",
     "test:video": "node scripts/check-video-section.mjs",
     "test:support-copy": "node scripts/check-support-section.mjs",
     "test:claims": "node scripts/check-claims.mjs",
+    "test:desk": "node scripts/check-desk.mjs",
     "preview": "vite preview",
     "test:download": "node scripts/check-download-page.mjs"
   },

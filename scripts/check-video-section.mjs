@@ -55,6 +55,14 @@ assert(
 );
 assert(videos.includes('allowFullScreen'), 'Video iframes should allow full-screen playback.');
 assert(
+  videos.includes('useReducedMotion'),
+  'Walkthrough carousel should honour prefers-reduced-motion.',
+);
+assert(
+  videos.includes('if (playing || reduceMotion) return'),
+  'Carousel auto-advance should pause while a video is playing or reduced motion is requested.',
+);
+assert(
   videos.includes('aria-roledescription="carousel"'),
   'Walkthrough videos should be presented as a carousel.',
 );
