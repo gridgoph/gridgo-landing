@@ -55,8 +55,24 @@ jobs:
       packages: write
     outputs:
       image: ${{ steps.meta.outputs.image }}
+    env:
+      # Publishable, not secret: it ships in every visitor's bundle. /desk signs
+      # in with it; without it the desk renders "not configured" and, with the
+      # API's password login gone, nobody can answer a ticket.
+      VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Require the desk's Clerk publishable key
+        run: |
+          set -euo pipefail
+          case "${VITE_CLERK_PUBLISHABLE_KEY}" in
+            pk_live_*|pk_test_*) ;;
+            *)
+              echo "::error::Set the repository variable CLERK_PUBLISHABLE_KEY to GRIDGO's Clerk publishable key (the dashboard's). /desk cannot sign in without it."
+              exit 1
+              ;;
+          esac
 
       - name: Resolve image name
         id: meta
@@ -84,6 +100,7 @@ jobs:
             VITE_API_URL=${{ env.VITE_API_URL }}
             VITE_DASHBOARD_URL=${{ env.VITE_DASHBOARD_URL }}
             VITE_GRID_COMMUNITY_URL=${{ vars.GRID_COMMUNITY_URL }}
+            VITE_CLERK_PUBLISHABLE_KEY=${{ env.VITE_CLERK_PUBLISHABLE_KEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -107,13 +124,17 @@ jobs:
             echo "::error::${VITE_DASHBOARD_URL} is not present in the built output"
             exit 1
           fi
+          if ! grep -rqF "${VITE_CLERK_PUBLISHABLE_KEY}" ./_dist; then
+            echo "::error::the Clerk publishable key is not present in the built output; /desk cannot sign in"
+            exit 1
+          fi
           # The variable NAME must not survive into the bundle — if it does, the
           # value was read at runtime rather than inlined.
           if grep -rqF 'VITE_API_URL' ./_dist; then
             echo "::error::VITE_API_URL appears literally in the bundle; it was not inlined"
             exit 1
           fi
-          echo "Deployed API and dashboard URLs confirmed in the built output."
+          echo "Deployed API URL, dashboard URL and desk Clerk key confirmed in the built output."
 
       - name: Smoke-test the published image
         run: |
