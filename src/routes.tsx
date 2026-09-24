@@ -18,3 +18,7 @@ export const DownloadRoute = lazy(() =>
 export const DeskRoute = lazy(() =>
   import('./desk/DeskPage').then((m) => ({ default: m.DeskPage })),
 )
+
+export const ReportRoute = lazy(() =>
+  import('./ReportPage').then((m) => ({ default: m.ReportPage })),
+)
