@@ -98,7 +98,7 @@ function LoginScreen() {
         </div>
         <p className="text-sm text-[#8a8a8a] mb-6">Sign in with {DESK_EMAIL}.</p>
         <SignIn
-          routing="virtual"
+          routing="hash"
           withSignUp={false}
           fallbackRedirectUrl="/desk"
           appearance={{
