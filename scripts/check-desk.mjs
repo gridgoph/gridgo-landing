@@ -50,7 +50,10 @@ assert(
   api.includes("Authorization") && api.includes('Bearer'),
   'Desk writes should send the admin session as a Bearer token.',
 );
-assert(api.includes('/admin/login'), 'Desk login should POST /admin/login.');
+assert(api.includes('setTokenProvider'), 'Desk requests should attach the Clerk session token.');
+assert(desk.includes('@clerk/react'), 'The desk should sign in with Clerk.');
+assert(desk.includes('gridgo26@gmail.com'), 'The desk should only accept the support Gmail.');
+assert(!api.includes('/admin/login'), 'The desk should not post a username and password.');
 assert(api.includes('replyMessage'), 'Desk replies should send replyMessage.');
 assert(api.includes('emailSent'), 'Desk should read emailSent from a reply.');
 assert(desk.includes('listTickets'), 'Desk should list tickets.');
