@@ -128,10 +128,13 @@ jobs:
             echo "::error::the Clerk publishable key is not present in the built output; /desk cannot sign in"
             exit 1
           fi
-          # The variable NAME must not survive into the bundle — if it does, the
-          # value was read at runtime rather than inlined.
-          if grep -rqF 'VITE_API_URL' ./_dist; then
-            echo "::error::VITE_API_URL appears literally in the bundle; it was not inlined"
+          # The variable NAME must not survive into the bundle on its own — if it
+          # does, the value was read at runtime rather than inlined. Clerk (on
+          # /desk) reads the whole `import.meta.env`, so Vite inlines that object
+          # as VITE_API_URL:`<value>`, which is inlined and allowed.
+          api_url_re="$(printf '%s' "${VITE_API_URL}" | sed 's/[.[\*^$()+?{|]/\\&/g')"
+          if grep -rhoP "VITE_API_URL(?!\s*:\s*[\"'\`]${api_url_re}[\"'\`])" ./_dist | grep -q .; then
+            echo "::error::VITE_API_URL appears in the bundle without its value; it was not inlined"
             exit 1
           fi
           echo "Deployed API URL, dashboard URL and desk Clerk key confirmed in the built output."
