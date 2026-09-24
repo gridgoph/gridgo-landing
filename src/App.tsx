@@ -368,6 +368,9 @@ function SupportSection({ isDarkMode }: { isDarkMode?: boolean }) {
           <Link to="/support" className="mt-4 w-full sm:w-auto px-10 py-3.5 rounded-full bg-[var(--color-primary)] text-black font-bold text-base hover:bg-[#FFE57F] hover:scale-105 hover:shadow-[0_0_25px_rgba(255,222,88,0.3)] transition-all duration-300 relative z-10">
             Submit a Ticket Now
           </Link>
+          <Link to="/report" className="text-sm font-semibold text-gray-700 dark:text-gray-300 underline decoration-[var(--color-primary)] decoration-2 underline-offset-4 hover:text-[var(--color-primary)] relative z-10">
+            Found a bug or want something changed? Report an issue
+          </Link>
         </motion.div>
 
         {/* Bottom stat row */}
@@ -674,6 +677,7 @@ function FooterSection() {
             <h4 className="text-[#666] text-[13px] lowercase font-mono">more</h4>
             <div className="flex flex-col gap-5">
               <a href="#about" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">ABOUT US</a>
+              <Link to="/report" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">REPORT AN ISSUE</Link>
             </div>
           </div>
         </div>
