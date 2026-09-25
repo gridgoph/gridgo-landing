@@ -72,6 +72,36 @@ assert(page.includes('minimumAndroidVersion'), 'The download page should state t
 assert(page.includes('clipboard.writeText'), 'The checksum should be copyable.');
 assert(/Coming soon/.test(page), 'An app with no published build should degrade to a clear state.');
 
+// ── When a phone refuses the install (gridgoph/gridgo-supplier#75) ────────
+assert(
+  /`Version \$\{release\.sidecar\.version\} · \$\{formatBytes\(release\.sidecar\.bytes\)\}`/.test(page),
+  'Each card should read "Version x · size" from the sidecar under its button.',
+);
+assert(
+  page.includes('formatExactBytes(release.sidecar.bytes)'),
+  'Each card should show the exact byte count, so a cut-short download is easy to spot.',
+);
+assert(
+  /version\?: string/.test(releases) && /\\d\+\(\\\.\\d\+\)\{1,3\}/.test(releases),
+  'The sidecar version should be optional and only shown when it looks like a version.',
+);
+assert(
+  page.includes(
+    "Phone says the app isn't installed or the package is invalid? Uninstall any older GRIDGO\n" +
+      '        app first, check the download finished at the full size above, then install again.',
+  ),
+  'The help line for a refused install should sit under the download buttons, as written.',
+);
+assert(
+  /<details[\s\S]*?Installing on Android[\s\S]*?Allow from this source[\s\S]*?Downloads[\s\S]*?<\/details>/.test(page),
+  'An expandable "Installing on Android" note should cover allowing the browser and where the file lands.',
+);
+assert(
+  page.indexOf('<InstallHelp />') > page.indexOf('<AppCard ') &&
+    page.indexOf('<InstallHelp />') < page.indexOf('How to install it'),
+  'The install help should follow the app cards directly.',
+);
+
 // Sidecars and APKs are read from the server, never hardcoded or committed.
 assert(
   releases.includes('downloadsBasePath'),

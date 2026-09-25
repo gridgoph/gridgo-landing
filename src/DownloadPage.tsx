@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Check,
+  ChevronDown,
   Copy,
   Download,
   Moon,
@@ -12,7 +13,12 @@ import {
 import { Link } from 'react-router-dom';
 import { GRIDGO_APPS, minimumAndroidVersion } from './utils/landingLinks';
 import type { GridgoApp } from './utils/landingLinks';
-import { fetchApkRelease, formatBytes, formatUpdated } from './utils/apkReleases';
+import {
+  fetchApkRelease,
+  formatBytes,
+  formatExactBytes,
+  formatUpdated,
+} from './utils/apkReleases';
 import type { ApkRelease } from './utils/apkReleases';
 import { useTheme } from './utils/useTheme';
 
@@ -153,8 +159,15 @@ function AppCard({ app, index, featured }: { app: GridgoApp; index: number; feat
                 Download for Android
               </a>
 
+              {/* Version and size sit under the button so a short download is easy to spot. */}
+              <p className="mt-3 text-center text-[13px] font-mono text-gray-600 dark:text-gray-400">
+                {release.sidecar.version
+                  ? `Version ${release.sidecar.version} · ${formatBytes(release.sidecar.bytes)}`
+                  : formatBytes(release.sidecar.bytes)}
+              </p>
+
               <div className="mt-6">
-                <DataRow label="Size" value={formatBytes(release.sidecar.bytes)} />
+                <DataRow label="Exact size" value={formatExactBytes(release.sidecar.bytes)} />
                 <DataRow label="Updated" value={updated ?? '—'} />
                 <DataRow label="Requires" value={`Android ${minimumAndroidVersion}+`} />
               </div>
@@ -165,6 +178,59 @@ function AppCard({ app, index, featured }: { app: GridgoApp; index: number; feat
         </div>
       </div>
     </motion.section>
+  );
+}
+
+/**
+ * Some phones answer a signing-key clash or a cut-short download with the same
+ * "package appears to be invalid" message (gridgoph/gridgo-supplier#75), so the
+ * fix sits right under the buttons rather than in the steps further down.
+ */
+function InstallHelp() {
+  return (
+    <div className="max-w-3xl mx-auto mt-8 mb-24 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+      <p className="text-center px-2">
+        Phone says the app isn't installed or the package is invalid? Uninstall any older GRIDGO
+        app first, check the download finished at the full size above, then install again.
+      </p>
+
+      <details className="group mt-5 rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02]">
+        <summary className="flex items-center justify-between gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden px-5 py-3.5 rounded-2xl font-bold text-black dark:text-white hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]">
+          Installing on Android
+          <ChevronDown
+            size={18}
+            aria-hidden="true"
+            className="shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+          />
+        </summary>
+        <dl className="px-5 pb-5 space-y-4">
+          <div>
+            <dt className="font-bold text-black dark:text-white mb-1">Allow installs from your browser</dt>
+            <dd>
+              The first time, Android stops and says your browser isn't allowed to install apps.
+              Tap Settings on that message, turn on "Allow from this source" for the browser you
+              downloaded with, such as Chrome or Samsung Internet, then go back and tap Install.
+            </dd>
+          </div>
+          <div>
+            <dt className="font-bold text-black dark:text-white mb-1">Where the file lands</dt>
+            <dd>
+              It saves to Downloads. If the notification is gone, open your Files app (My Files on
+              Samsung), go to Downloads and tap the file ending in .apk, such as{' '}
+              <span className="font-mono text-[13px] whitespace-nowrap">gridgo-supplier.apk</span>.
+            </dd>
+          </div>
+          <div>
+            <dt className="font-bold text-black dark:text-white mb-1">Checking the size</dt>
+            <dd>
+              Phones don't all count megabytes the same way, so your Files app may show a figure
+              about 5% higher than the one above. A file much smaller than that stopped partway:
+              delete it and download again.
+            </dd>
+          </div>
+        </dl>
+      </details>
+    </div>
   );
 }
 
@@ -233,11 +299,13 @@ export function DownloadPage() {
         </motion.header>
 
         {/* The three apps */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {GRIDGO_APPS.map((app, i) => (
             <AppCard key={app.key} app={app} index={i} featured={app.key === featuredKey} />
           ))}
         </div>
+
+        <InstallHelp />
 
         {/* Install steps */}
         <motion.section

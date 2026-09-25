@@ -7,6 +7,10 @@ import type { GridgoApp } from './landingLinks';
  *
  *   {"app":"client","file":"gridgo-client.apk","bytes":1100228,
  *    "sha256":"ac78...","updated":"2026-08-11T00:48:00Z"}
+ *
+ * `version` is optional: the server writes it only once the release workflow
+ * passes the app's version to `upload-apk`. Until then the card shows the size
+ * alone, and a malformed version is dropped rather than failing the build.
  */
 export type ApkSidecar = {
   app: string;
@@ -14,6 +18,7 @@ export type ApkSidecar = {
   bytes: number;
   sha256: string;
   updated: string;
+  version?: string;
 };
 
 export type ApkRelease =
@@ -77,10 +82,16 @@ export async function fetchApkRelease(app: GridgoApp): Promise<ApkRelease> {
     return { state: 'unavailable', reason: 'The published build details are incomplete.' };
   }
 
+  const { version, ...rest } = payload;
+  const sidecar: ApkSidecar = { ...rest, file: safeFile };
+  if (typeof version === 'string' && /^\d+(\.\d+){1,3}$/.test(version.trim())) {
+    sidecar.version = version.trim();
+  }
+
   return {
     state: 'available',
     downloadUrl: `${downloadsBasePath}/${safeFile}`,
-    sidecar: { ...payload, file: safeFile },
+    sidecar,
   };
 }
 
@@ -88,6 +99,15 @@ export function formatBytes(bytes: number) {
   const mb = bytes / (1024 * 1024);
   if (mb >= 1) return `${mb.toFixed(1)} MB`;
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/**
+ * The byte count itself, which no unit convention can round away — the one
+ * figure a person can compare against a file's details to spot a download
+ * that was cut short.
+ */
+export function formatExactBytes(bytes: number) {
+  return `${new Intl.NumberFormat('en-PH').format(bytes)} bytes`;
 }
 
 export function formatUpdated(iso: string) {
