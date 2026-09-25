@@ -78,6 +78,53 @@ body {
   background-attachment: fixed;
 }
 
+.desk-sign-in .cl-card,
+.desk-sign-in .cl-cardBox,
+.desk-sign-in .cl-footer,
+.desk-sign-in .cl-main {
+  background: #101010 !important;
+  color: #f4f4f4 !important;
+  border-color: #262626 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.desk-sign-in .cl-headerTitle,
+.desk-sign-in .cl-identityPreviewText,
+.desk-sign-in .cl-formFieldLabel,
+.desk-sign-in .cl-formFieldInput,
+.desk-sign-in .cl-socialButtonsBlockButtonText {
+  color: #f4f4f4 !important;
+}
+
+.desk-sign-in .cl-headerSubtitle,
+.desk-sign-in .cl-dividerText,
+.desk-sign-in .cl-footerActionText,
+.desk-sign-in .cl-formFieldInfoText {
+  color: #8a8a8a !important;
+}
+
+.desk-sign-in .cl-formFieldInput,
+.desk-sign-in .cl-socialButtonsBlockButton {
+  background: #070707 !important;
+  border: 1px solid #262626 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.desk-sign-in .cl-formButtonPrimary {
+  background: #ffde58 !important;
+  color: #000 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.desk-sign-in .cl-footerActionLink,
+.desk-sign-in .cl-formFieldAction__forgotPassword,
+.desk-sign-in .cl-button__forgotPassword {
+  color: #ffde58 !important;
+}
+
 .glass-nav {
   background-color: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(12px);

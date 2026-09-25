@@ -18,6 +18,7 @@
     "test:report": "node scripts/check-report-page.mjs"
   },
   "dependencies": {
+    "@clerk/react": "^6.17.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "framer-motion": "^12.38.0",

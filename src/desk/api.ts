@@ -1,7 +1,5 @@
 import { apiBaseUrl } from '../utils/apiBase';
 
-const TOKEN_KEY = 'gridgo-ticket-desk-token';
-
 export type Ticket = {
   id: string;
   name: string;
@@ -15,25 +13,16 @@ export type Ticket = {
   emailSent?: boolean;
 };
 
-export function getToken(): string | null {
-  try {
-    return sessionStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
-}
+type TokenProvider = () => Promise<string | null>;
 
-export function setToken(token: string | null): void {
-  try {
-    if (token) sessionStorage.setItem(TOKEN_KEY, token);
-    else sessionStorage.removeItem(TOKEN_KEY);
-  } catch {
-    // Private windows can refuse storage; the session simply will not persist.
-  }
+let tokenProvider: TokenProvider | null = null;
+
+export function setTokenProvider(provider: TokenProvider | null): void {
+  tokenProvider = provider;
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getToken();
+  const token = tokenProvider ? await tokenProvider() : null;
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
   if (token) headers.set('Authorization', `Bearer ${token}`);
@@ -45,17 +34,6 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error(data.message || `Request failed (${response.status})`);
   }
   return data;
-}
-
-export function login(username: string, password: string) {
-  return request<{ token: string; username: string }>('/admin/login', {
-    method: 'POST',
-    body: JSON.stringify({ username, password }),
-  });
-}
-
-export function me() {
-  return request<{ username: string }>('/admin/me');
 }
 
 export function listTickets() {

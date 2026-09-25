@@ -45,14 +45,19 @@ details a person needs before installing software from the open web.
 `/api/support-tickets`). Dev may use `VITE_API_URL=/api` with the Vite proxy
 to `:8787`, which must not strip `/api`. Support form fields stay white in
 dark mode so typed text is readable. `/desk` is the operator desk; it is not
-linked from the public nav.
+linked from the public nav. It signs in with Clerk (the dashboard's instance,
+`VITE_CLERK_PUBLISHABLE_KEY`, from the `CLERK_PUBLISHABLE_KEY` repo variable in
+CI); gridgo-api decides who may use it via `SUPPORT_DESK_ALLOWED_EMAILS` and
+must list `https://gridgo.talasora.com` in `CLERK_AUTHORIZED_PARTIES`.
 
 **A `VITE_*` value only reaches the bundle if rendered markup reads it.** The
 deploy workflow refuses to publish a bundle missing the deployed API and
 dashboard URLs, and a re-port once dropped the dashboard link entirely — the
 constant survived, nothing rendered it, Vite inlined nothing, and the publish
 job rejected the build. `check-claims.mjs` now asserts a rendered link uses
-`dashboardUrl`.
+`dashboardUrl`. Clerk reads `import.meta.env` whole, so the DeskPage chunk
+carries every `VITE_*` name next to its value; the deploy guard allows only
+that inlined form.
 
 ## Sharp edges found the hard way
 

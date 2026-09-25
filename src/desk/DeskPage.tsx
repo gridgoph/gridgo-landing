@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { ClerkProvider, SignIn, useAuth, useClerk, useUser } from '@clerk/react';
 import { Mark } from './Mark';
 import {
   deleteTicket,
-  getToken,
   listTickets,
-  login,
-  me,
   replyToTicket,
-  setToken,
+  setTokenProvider,
   type Ticket,
 } from './api';
+
+const DESK_EMAIL = 'gridgo26@gmail.com';
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() ?? '';
 
 type Filter = 'open' | 'closed' | 'all';
 
@@ -24,28 +25,33 @@ function formatWhen(iso: string): string {
 }
 
 export function DeskPage() {
-  const [username, setUsername] = useState<string | null>(null);
-  const [checking, setChecking] = useState(() => Boolean(getToken()));
+  if (!CLERK_PUBLISHABLE_KEY) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-[#070707] text-[#8a8a8a] px-6 text-center text-sm">
+        Desk sign-in is not configured.
+      </div>
+    );
+  }
+
+  return (
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} afterSignOutUrl="/desk">
+      <DeskGate />
+    </ClerkProvider>
+  );
+}
+
+function DeskGate() {
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { signOut } = useClerk();
+  const { user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() ?? '';
 
   useEffect(() => {
-    if (!getToken()) return;
-    let cancelled = false;
-    me()
-      .then((session) => {
-        if (!cancelled) setUsername(session.username);
-      })
-      .catch(() => {
-        if (!cancelled) setToken(null);
-      })
-      .finally(() => {
-        if (!cancelled) setChecking(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    setTokenProvider(() => getToken());
+    return () => setTokenProvider(null);
+  }, [getToken]);
 
-  if (checking) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen grid place-items-center bg-[#070707] text-[#8a8a8a] tracking-[0.3em] uppercase text-xs">
         Opening desk
@@ -53,54 +59,35 @@ export function DeskPage() {
     );
   }
 
-  if (!username) {
+  if (!isSignedIn) {
+    return <LoginScreen />;
+  }
+
+  if (email !== DESK_EMAIL) {
     return (
-      <LoginScreen
-        onSignedIn={(nextUser, token) => {
-          setToken(token);
-          setUsername(nextUser);
-        }}
-      />
+      <div className="min-h-screen flex items-center justify-center px-6 bg-[#070707] text-[#f4f4f4]">
+        <div className="w-full max-w-md">
+          <p className="text-sm text-[#8a8a8a] mb-6">
+            This desk only accepts {DESK_EMAIL}.
+          </p>
+          <button
+            type="button"
+            onClick={() => signOut()}
+            className="py-3 px-6 bg-[#FFDE58] text-black font-bold tracking-wide"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
     );
   }
 
-  return (
-    <Desk
-      username={username}
-      onSignOut={() => {
-        setToken(null);
-        setUsername(null);
-      }}
-    />
-  );
+  return <Desk username={email} onSignOut={() => signOut()} />;
 }
 
-function LoginScreen({
-  onSignedIn,
-}: {
-  onSignedIn: (username: string, token: string) => void;
-}) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setError('');
-    setBusy(true);
-    try {
-      const result = await login(username, password);
-      onSignedIn(result.username, result.token);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not sign in.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
+function LoginScreen() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 bg-[#070707] text-[#f4f4f4]">
+    <div className="desk-sign-in min-h-screen flex items-center justify-center px-6 bg-[#070707] text-[#f4f4f4]">
       <div className="w-full max-w-md">
         <div className="flex items-center gap-3 mb-10">
           <Mark size={22} />
@@ -109,37 +96,31 @@ function LoginScreen({
             <p className="text-[11px] uppercase tracking-[0.28em] text-[#8a8a8a]">Ticketing desk</p>
           </div>
         </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <label className="flex flex-col gap-2 text-sm">
-            Username
-            <input
-              autoComplete="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              className="bg-[#101010] text-[#f4f4f4] border border-[#262626] rounded-none px-4 py-3 outline-none focus:border-[#FFDE58]"
-              required
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            Password
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="bg-[#101010] text-[#f4f4f4] border border-[#262626] rounded-none px-4 py-3 outline-none focus:border-[#FFDE58]"
-              required
-            />
-          </label>
-          {error ? <p className="text-sm text-red-400">{error}</p> : null}
-          <button
-            type="submit"
-            disabled={busy}
-            className="mt-2 py-3 bg-[#FFDE58] text-black font-bold tracking-wide disabled:opacity-50"
-          >
-            {busy ? 'Signing in…' : 'Open desk'}
-          </button>
-        </form>
+        <p className="text-sm text-[#8a8a8a] mb-6">Sign in with {DESK_EMAIL}.</p>
+        <SignIn
+          routing="hash"
+          withSignUp={false}
+          fallbackRedirectUrl="/desk"
+          appearance={{
+            elements: {
+              rootBox: 'w-full',
+              cardBox: 'w-full',
+              card: 'w-full bg-[#101010] text-[#f4f4f4] border border-[#262626] shadow-none rounded-none',
+              headerTitle: 'text-[#f4f4f4]',
+              headerSubtitle: 'text-[#8a8a8a]',
+              socialButtonsBlockButton: 'bg-[#070707] text-[#f4f4f4] border border-[#262626] rounded-none shadow-none',
+              socialButtonsBlockButtonText: 'text-[#f4f4f4]',
+              dividerLine: 'bg-[#262626]',
+              dividerText: 'text-[#8a8a8a]',
+              formFieldLabel: 'text-[#f4f4f4]',
+              formFieldInput: 'bg-[#070707] text-[#f4f4f4] border border-[#262626] rounded-none shadow-none',
+              formButtonPrimary: 'bg-[#FFDE58] text-black rounded-none shadow-none hover:bg-[#FFDE58]',
+              footer: 'bg-transparent',
+              footerActionText: 'text-[#8a8a8a]',
+              footerActionLink: 'text-[#FFDE58]',
+            },
+          }}
+        />
       </div>
     </div>
   );

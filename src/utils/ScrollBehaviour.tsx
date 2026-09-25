@@ -33,7 +33,7 @@ export function ScrollBehaviour() {
     const hashChanged = hash !== '' && hash !== previousHash.current;
     previousHash.current = hash;
 
-    if (hashChanged) {
+    if (hashChanged && isPageAnchor(hash)) {
       const anchor = document.querySelector(hash);
       if (anchor) {
         anchor.scrollIntoView();
@@ -57,4 +57,14 @@ export function ScrollBehaviour() {
   }, [pathname, hash, navigationType]);
 
   return null;
+}
+
+/** Clerk sign-in steps use hashes such as `#/factor-one`, which are not element ids. */
+function isPageAnchor(hash: string): boolean {
+  if (!/^#[A-Za-z][\w-]*$/.test(hash)) return false;
+  try {
+    return document.querySelector(hash) != null;
+  } catch {
+    return false;
+  }
 }
