@@ -19,6 +19,7 @@ const apiBase = read('../src/utils/apiBase.ts');
 const support = read('../src/SupportPage.tsx');
 const deploy = read('../.github/workflows/deploy.yml');
 const vite = read('../vite.config.ts');
+const dockerfile = read('../Dockerfile');
 
 assert(
   !existsSync(resolve(scriptDir, '../admin')),
@@ -50,7 +51,19 @@ assert(
   api.includes("Authorization") && api.includes('Bearer'),
   'Desk writes should send the admin session as a Bearer token.',
 );
-assert(api.includes('/admin/login'), 'Desk login should POST /admin/login.');
+assert(api.includes('setTokenProvider'), 'Desk requests should attach the Clerk session token.');
+assert(desk.includes('@clerk/react'), 'The desk should sign in with Clerk.');
+assert(desk.includes('gridgo26@gmail.com'), 'The desk should only accept the support Gmail.');
+assert(!api.includes('/admin/login'), 'The desk should not post a username and password.');
+assert(
+  /^ARG VITE_CLERK_PUBLISHABLE_KEY$/m.test(dockerfile) &&
+    /VITE_CLERK_PUBLISHABLE_KEY=\$VITE_CLERK_PUBLISHABLE_KEY/.test(dockerfile),
+  'The image build must receive VITE_CLERK_PUBLISHABLE_KEY, or production /desk cannot sign in.',
+);
+assert(
+  deploy.includes('VITE_CLERK_PUBLISHABLE_KEY=${{ env.VITE_CLERK_PUBLISHABLE_KEY }}'),
+  'deploy.yml should pass the Clerk publishable key to the image build.',
+);
 assert(api.includes('replyMessage'), 'Desk replies should send replyMessage.');
 assert(api.includes('emailSent'), 'Desk should read emailSent from a reply.');
 assert(desk.includes('listTickets'), 'Desk should list tickets.');

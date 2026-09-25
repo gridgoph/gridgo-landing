@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_DASHBOARD_URL?: string;
   /** Community link. Unset means the CTA is not rendered. */
   readonly VITE_GRID_COMMUNITY_URL?: string;
+  /** GRIDGO Clerk publishable key. The /desk route is the only consumer. */
+  readonly VITE_CLERK_PUBLISHABLE_KEY?: string;
 }
 
 interface ImportMeta {

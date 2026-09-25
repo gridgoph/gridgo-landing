@@ -39,6 +39,7 @@ as an honest "not published yet" state rather than a dead link.
 | `VITE_API_URL` | `https://gridgo-api.talasora.com` | API origin for `/support` and `/desk` (no trailing `/api`) |
 | `VITE_DASHBOARD_URL` | `https://gridgo-dash.talasora.com` | Partner dashboard link |
 | `VITE_GRID_COMMUNITY_URL` | *(none)* | Community CTA target; the CTA is not rendered while unset |
+| `VITE_CLERK_PUBLISHABLE_KEY` | *(none)* | GRIDGO's Clerk publishable key (the dashboard's instance) for `/desk` sign-in; the desk shows "not configured" while unset. CI takes it from the `CLERK_PUBLISHABLE_KEY` repository variable and refuses to publish without it |
 
 There is no mobile-web build and no configuration for one — the apps are the
 mobile experience, and `/download` is how people get them.
