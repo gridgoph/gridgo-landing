@@ -119,7 +119,11 @@ forever.
 `~/gridgo/downloads` on the host is mounted read-only at `/srv/gridgo-downloads`
 and served at `/downloads/`. Each app's build writes `<slug>.apk` and a
 `<slug>.json` sidecar there; this site only ever reads them, and a missing file
-renders as "not available yet" rather than a broken link.
+renders as "not available yet" rather than a broken link. The sidecar is written
+by the server's `upload-apk` command, which receives only the APK bytes — so it
+carries `bytes`, `sha256` and `updated` but no `version` unless that command and
+each app's release workflow pass one. `ApkSidecar` in `src/utils/apkReleases.ts`
+is the shape.
 
 ## Maintaining this file
 
