@@ -4,15 +4,25 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PhoneScene } from './components/PhoneScene';
 import { EcosystemSection } from './components/EcosystemSection';
 import { HowItWorksVideos } from './components/HowItWorksVideos';
-import { Menu, X, MessageCircle, Zap, ShieldCheck, ChevronUp, Moon, Sun } from 'lucide-react';
+import { Menu, X, MessageCircle, Zap, ShieldCheck, ChevronUp, ChevronDown, Moon, Sun } from 'lucide-react';
 import { HardDriveUploadIcon, TruckIcon, ListIcon, TimerIcon, MessageCircleIcon } from 'lucide-animated';
 import { Link } from 'react-router-dom';
 import { landingLinks } from './utils/landingLinks';
 import { useTheme } from './utils/useTheme';
+import { OpenerStage } from './components/OpenerIntro';
 
-function Navbar({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean, toggleDarkMode: () => void }) {
+const NAV_LINKS = [
+  { href: '#features', id: 'features', label: 'Features' },
+  { href: '#process', id: 'process', label: 'How it Works' },
+  { href: '#ecosystem', id: 'ecosystem', label: 'Ecosystem' },
+  { href: '#support', id: 'support', label: 'Support' },
+  { href: '#about', id: 'about', label: 'About Us' },
+] as const;
+
+function Navbar({ isDarkMode, toggleDarkMode, revealed }: { isDarkMode: boolean, toggleDarkMode: () => void, revealed: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [active, setActive] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,12 +33,30 @@ function Navbar({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean, toggleDar
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const nodes = NAV_LINKS.map((link) => document.getElementById(link.id)).filter((node): node is HTMLElement => Boolean(node));
+    const seen = new Map<string, IntersectionObserverEntry>();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => seen.set(entry.target.id, entry));
+      const visible = [...seen.values()]
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRect.height - a.intersectionRect.height)[0];
+      setActive(visible?.target.id ?? null);
+    }, { rootMargin: '-42% 0px -48% 0px', threshold: 0 });
+    nodes.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, []);
+
+  const linkClass = (id: string) =>
+    `transition-colors hover:text-[var(--color-primary)] ${active === id ? 'text-[var(--color-primary)]' : ''}`;
+
   return (
     <>
       <motion.nav
-        initial={{ y: -100, opacity: 0, filter: 'blur(10px)' }}
-        animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-        transition={{ duration: 1, ease: "easeOut" }}
+        initial={false}
+        animate={revealed ? { y: 0, opacity: 1, filter: 'blur(0px)' } : { y: -24, opacity: 0, filter: 'blur(8px)' }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        style={{ pointerEvents: revealed ? 'auto' : 'none' }}
         className="fixed top-0 left-0 right-0 z-[60] px-8 py-4 flex items-center justify-between"
       >
         {/* Logo */}
@@ -51,11 +79,9 @@ function Navbar({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean, toggleDar
 
         {/* Center Nav */}
         <div className={`hidden md:flex rounded-full px-6 py-2.5 items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2 border transition duration-500 ${isScrolled ? 'bg-white dark:bg-black/60 backdrop-blur-md border-black/10 dark:border-white/10' : 'bg-transparent border-transparent backdrop-blur-none'}`}>
-          <a href="#features" className="hover:text-[var(--color-primary)] transition-colors">Features</a>
-          <a href="#process" className="hover:text-[var(--color-primary)] transition-colors">How it Works</a>
-          <a href="#ecosystem" className="hover:text-[var(--color-primary)] transition-colors">Ecosystem</a>
-          <a href="#support" className="hover:text-[var(--color-primary)] transition-colors">Support</a>
-          <a href="#about" className="hover:text-[var(--color-primary)] transition-colors">About Us</a>
+          {NAV_LINKS.map((link) => (
+            <a key={link.id} href={link.href} aria-current={active === link.id ? 'true' : undefined} className={linkClass(link.id)}>{link.label}</a>
+          ))}
         </div>
 
         {/* Right Nav */}
@@ -90,11 +116,9 @@ function Navbar({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean, toggleDar
             exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
             className="fixed inset-0 z-50 bg-white dark:bg-black/90 backdrop-blur-lg flex flex-col items-center justify-center gap-8 md:hidden"
           >
-            <a href="#features" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Features</a>
-            <a href="#process" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">How it Works</a>
-            <a href="#ecosystem" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Ecosystem</a>
-            <a href="#support" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Support</a>
-            <a href="#about" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">About Us</a>
+            {NAV_LINKS.map((link) => (
+              <a key={link.id} href={link.href} onClick={() => setIsOpen(false)} aria-current={active === link.id ? 'true' : undefined} className={`text-2xl font-bold transition-colors ${linkClass(link.id)}`}>{link.label}</a>
+            ))}
             <Link to="/download" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Download</Link>
             {/* <div className="flex gap-4 mt-8">
               <button className="px-8 py-3 bg-white dark:bg-black/60 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-full transition-colors font-bold" onClick={() => setIsOpen(false)}>Log In</button>
@@ -107,7 +131,7 @@ function Navbar({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean, toggleDar
   );
 }
 
-function HeroSection({ isDarkMode }: { isDarkMode?: boolean }) {
+function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed: boolean }) {
   return (
     <section id="hero" className="min-h-[100vh] flex flex-col items-center justify-center relative z-10 bg-map bg-cover bg-center overflow-hidden" style={{ backgroundImage: `url(${isDarkMode ? "/Dark_route_animation.gif" : "/Light-lights-route-animation.gif"})` }}>
       <div className="absolute inset-0 bg-white/60 dark:bg-black/40 backdrop-blur-sm dark:backdrop-blur-[3px] z-0 pointer-events-none" />
@@ -116,9 +140,9 @@ function HeroSection({ isDarkMode }: { isDarkMode?: boolean }) {
       <div className="relative z-10 flex flex-col items-center text-center px-4 w-full h-full pt-24 md:pt-32">
         {/* Logo and Tagline */}
         <motion.div
-          initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.8 }}
+          initial={false}
+          animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 20, filter: 'blur(10px)' }}
+          transition={{ duration: 0 }}
           className="flex flex-col items-center mb-6 md:mb-8"
         >
           {/* 3x3 Grid Logo */}
@@ -141,30 +165,42 @@ function HeroSection({ isDarkMode }: { isDarkMode?: boolean }) {
 
         {/* Main Headings */}
         <motion.div
-          initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-3xl flex flex-col items-center"
+          initial={false}
+          animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 20, filter: 'blur(10px)' }}
+          transition={{ duration: 0 }}
+          className="relative z-20 max-w-3xl flex flex-col items-center"
         >
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--color-primary)] mb-6 tracking-tight">
-            Design. Tap. Print.
+            Design. Tap. <span className="whitespace-nowrap">Print<span data-print-dot className="print-stop">.</span></span>
           </h1>
           <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-8 md:mb-10 font-medium leading-relaxed">
             Send your files from the app straight to our printers. We'll handle the printing and deliver it to your door so you don't have to leave your seat.
           </p>
+          {revealed && (
+            <motion.a
+              href="#features"
+              aria-label="Scroll to Features"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-primary)]/50 bg-white/70 text-[var(--color-primary)] backdrop-blur-md dark:bg-black/50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, y: [0, 6, 0] }}
+              transition={{ opacity: { duration: 0.4 }, y: { duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: 0.6 } }}
+            >
+              <ChevronDown size={18} />
+            </motion.a>
+          )}
         </motion.div>
 
         {/* Phone Mockup at bottom */}
         <motion.div
-          initial={{ opacity: 0, y: 100, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+          initial={false}
+          animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 80, filter: 'blur(10px)' }}
+          transition={{ duration: 0 }}
           className="mt-auto relative w-[320px] md:w-[550px] lg:w-[750px] h-[400px] md:h-[600px] lg:h-[750px]"
         >
           <img
             src="/GIRDGO_PHONE.png"
             alt="GRIDGO App"
-            className="absolute bottom-0 left-0 w-full h-full object-contain object-bottom drop-shadow-[0_0_40px_rgba(255,222,88,0.15)] scale-160 lg:scale-120 origin-bottom"
+            className="pointer-events-none absolute bottom-0 left-0 w-full h-full object-contain object-bottom drop-shadow-[0_0_40px_rgba(255,222,88,0.15)] scale-160 lg:scale-120 origin-bottom"
           />
         </motion.div>
       </div>
@@ -367,9 +403,6 @@ function SupportSection({ isDarkMode }: { isDarkMode?: boolean }) {
 
           <Link to="/support" className="mt-4 w-full sm:w-auto px-10 py-3.5 rounded-full bg-[var(--color-primary)] text-black font-bold text-base hover:bg-[#FFE57F] hover:scale-105 hover:shadow-[0_0_25px_rgba(255,222,88,0.3)] transition-all duration-300 relative z-10">
             Submit a Ticket Now
-          </Link>
-          <Link to="/report" className="text-sm font-semibold text-gray-700 dark:text-gray-300 underline decoration-[var(--color-primary)] decoration-2 underline-offset-4 hover:text-[var(--color-primary)] relative z-10">
-            Found a bug or want something changed? Report an issue
           </Link>
         </motion.div>
 
@@ -677,7 +710,6 @@ function FooterSection() {
             <h4 className="text-[#666] text-[13px] lowercase font-mono">more</h4>
             <div className="flex flex-col gap-5">
               <a href="#about" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">ABOUT US</a>
-              <Link to="/report" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">REPORT AN ISSUE</Link>
             </div>
           </div>
         </div>
@@ -699,6 +731,8 @@ function FooterSection() {
 
 function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
+  const [navReady, setNavReady] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
 
   useEffect(() => {
@@ -711,7 +745,7 @@ function App() {
 
   return (
     <div className="w-full relative custom-scrollbar bg-white dark:bg-black text-black dark:text-white">
-      <Navbar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+      <Navbar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} revealed={navReady} />
 
       {/* The 3D Parallax Canvas stays fixed in the background but is now hidden in the hero section */}
       {/*
@@ -729,7 +763,9 @@ function App() {
 
       {/* Scrollable Content */}
       <div className="relative w-full">
-        <HeroSection isDarkMode={isDarkMode} />
+        <OpenerStage onHero={() => setHeroReady(true)} onNav={() => setNavReady(true)}>
+          <HeroSection isDarkMode={isDarkMode} revealed={heroReady} />
+        </OpenerStage>
         <FeaturesSection />
         <HowItWorksSection />
         <EcosystemSection isDarkMode={isDarkMode} />
