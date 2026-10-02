@@ -133,20 +133,20 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed }: { isDarkMode: boolean,
 
 function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed: boolean }) {
   return (
-    <section id="hero" className="min-h-[100vh] flex flex-col items-center justify-center relative z-10 bg-map bg-cover bg-center overflow-hidden" style={{ backgroundImage: `url(${isDarkMode ? "/Dark_route_animation.gif" : "/Light-lights-route-animation.gif"})` }}>
+    <section id="hero" className="relative z-10 flex min-h-[100svh] flex-col items-center bg-map bg-cover bg-center" style={{ backgroundImage: `url(${isDarkMode ? "/Dark_route_animation.gif" : "/Light-lights-route-animation.gif"})` }}>
       <div className="absolute inset-0 bg-white/60 dark:bg-black/40 backdrop-blur-sm dark:backdrop-blur-[3px] z-0 pointer-events-none" />
 
       {/* Content wrapper */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 w-full h-full pt-24 md:pt-32">
+      <div className="relative z-10 flex min-h-[100svh] w-full flex-col items-center px-4 pt-24 text-center md:pt-32">
         {/* Logo and Tagline */}
         <motion.div
           initial={false}
           animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 20, filter: 'blur(10px)' }}
           transition={{ duration: 0 }}
-          className="flex flex-col items-center mb-6 md:mb-8"
+          className="flex flex-col items-center mb-1"
         >
           {/* 3x3 Grid Logo */}
-          <div className="grid grid-cols-3 gap-1.5 mb-2">
+          <div className="grid grid-cols-3 gap-1.5 mb-1">
             <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full"></div>
             <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full"></div>
             <div className="w-2.5 h-2.5 bg-[var(--color-primary)] rounded-full"></div>
@@ -157,8 +157,8 @@ function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed:
             <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full"></div>
             <div className="w-2.5 h-2.5 bg-gray-400 rounded-full"></div>
           </div>
-          <span className="text-4xl font-black tracking-widest uppercase mt-2">GRID<span className="text-[var(--color-primary)]">GO</span></span>
-          <p className="text-[11px] md:text-sm tracking-[0.3em] uppercase mt-3 font-semibold text-gray-800 dark:text-gray-200">
+          <span className="text-4xl font-black tracking-widest uppercase mt-1">GRID<span className="text-[var(--color-primary)]">GO</span></span>
+          <p className="text-[11px] md:text-sm tracking-[0.3em] uppercase mt-1.5 font-semibold text-gray-800 dark:text-gray-200">
             MAPPING THE FUTURE OF PRINTING.
           </p>
         </motion.div>
@@ -170,10 +170,10 @@ function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed:
           transition={{ duration: 0 }}
           className="relative z-20 max-w-3xl flex flex-col items-center"
         >
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--color-primary)] mb-6 tracking-tight">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--color-primary)] mb-2 tracking-tight">
             Design. Tap. <span className="whitespace-nowrap">Print<span data-print-dot className="print-stop">.</span></span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-8 md:mb-10 font-medium leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-2 font-medium leading-relaxed">
             Send your files from the app straight to our printers. We'll handle the printing and deliver it to your door so you don't have to leave your seat.
           </p>
           {revealed && (
@@ -189,21 +189,29 @@ function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed:
             </motion.a>
           )}
         </motion.div>
-
-        {/* Phone Mockup at bottom */}
-        <motion.div
-          initial={false}
-          animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 80, filter: 'blur(10px)' }}
-          transition={{ duration: 0 }}
-          className="mt-auto relative w-[320px] md:w-[550px] lg:w-[750px] h-[400px] md:h-[600px] lg:h-[750px]"
-        >
-          <img
-            src="/GIRDGO_PHONE.png"
-            alt="GRIDGO App"
-            className="pointer-events-none absolute bottom-0 left-0 w-full h-full object-contain object-bottom drop-shadow-[0_0_40px_rgba(255,222,88,0.15)] scale-160 lg:scale-120 origin-bottom"
-          />
-        </motion.div>
       </div>
+
+      {/* Phone Mockup at bottom */}
+      <motion.div
+        initial={false}
+        animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 80, filter: 'blur(10px)' }}
+        transition={{ duration: 0 }}
+        className="relative z-10 -mt-28 flex w-full justify-center md:-mt-32"
+      >
+        <div className="relative w-[min(62vw,540px)] overflow-hidden md:w-[min(34vw,540px)]" style={{ aspectRatio: '1113 / 1347' }}>
+            <img
+              src="/GIRDGO_PHONE.png"
+              alt="GRIDGO App"
+              className="pointer-events-none absolute max-w-none drop-shadow-[0_0_40px_rgba(255,222,88,0.15)]"
+              style={{
+                height: '105.5%',
+                width: 'auto',
+                left: '-34.8%',
+                top: '-5.3%',
+              }}
+            />
+          </div>
+      </motion.div>
     </section>
   );
 }

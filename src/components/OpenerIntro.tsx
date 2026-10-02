@@ -84,12 +84,11 @@ type Target = { cx: number; cy: number; d: number };
 function measureDot(sticky: HTMLElement): Target | null {
   const dot = sticky.querySelector<HTMLElement>('[data-print-dot]');
   if (!dot) return null;
-  const host = sticky.getBoundingClientRect();
   const box = dot.getBoundingClientRect();
   if (box.width < 1) return null;
   return {
-    cx: box.left + box.width / 2 - host.left,
-    cy: box.top + box.height / 2 - host.top,
+    cx: box.left + box.width / 2,
+    cy: box.top + box.height / 2,
     d: Math.max(box.width, box.height),
   };
 }
@@ -134,11 +133,13 @@ function OpenerPlay({
     h: typeof window === 'undefined' ? 0 : window.innerHeight,
   }));
   const [held, setHeld] = useState(false);
+  const [handoffDone, setHandoffDone] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const heldRef = useRef(false);
   const started = useRef(false);
   const navSent = useRef(false);
+  const pendingScroll = useRef(false);
   const stopRef = useRef<() => void>(() => {});
   const onHeroRef = useRef(onHero);
   const onNavRef = useRef(onNav);
@@ -252,18 +253,25 @@ function OpenerPlay({
       if (!stage || !sticky) return;
       const measured = measureDot(sticky);
       if (measured) targetRef.current = measured;
-      const pin = Math.max(1, stage.offsetHeight - window.innerHeight);
-      const p = Math.min(1, Math.max(0, window.scrollY / pin));
+      const pin = Math.max(1, stage.offsetHeight - sticky.offsetHeight);
+      const scrolled = window.scrollY - stage.offsetTop;
+      const p = Math.min(1, Math.max(0, scrolled / pin));
       progress.set(p);
       if (!navSent.current && p > 0.18) {
         navSent.current = true;
         onNavRef.current();
       }
+      const finished = p >= 1;
+      if (finished !== handoffDone) setHandoffDone(finished);
     };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
+    if (pendingScroll.current) {
+      pendingScroll.current = false;
+      scrollToPin();
+    }
     return () => window.removeEventListener('scroll', onScroll);
-  }, [held, progress]);
+  }, [held, progress, handoffDone]);
 
   const size = Math.min(vp.w, vp.h) * 0.28 || 0;
   const markLeft = (vp.w - size) / 2;
@@ -308,6 +316,14 @@ function OpenerPlay({
   });
   const lineY = useTransform(after, [0, 1], [18, 0]);
 
+  const scrollToPin = () => {
+    const stage = stageRef.current;
+    const sticky = stickyRef.current;
+    if (!stage) return;
+    const pin = Math.max(0, stage.offsetHeight - (sticky?.offsetHeight ?? window.innerHeight));
+    window.scrollTo({ top: stage.offsetTop + pin, behavior: 'smooth' });
+  };
+
   const viewHero = () => {
     if (!heldRef.current) {
       stopRef.current();
@@ -319,20 +335,20 @@ function OpenerPlay({
       document.body.style.overflow = '';
       setHeld(true);
       onHeroRef.current();
+      pendingScroll.current = true;
+      return;
     }
-    window.requestAnimationFrame(() => {
-      const stage = stageRef.current;
-      if (!stage) return;
-      const pin = Math.max(0, stage.offsetHeight - window.innerHeight);
-      window.scrollTo({ top: pin, behavior: 'smooth' });
-    });
+    scrollToPin();
   };
 
   return (
-    <div ref={stageRef} className="relative h-[200vh]">
-      <div ref={stickyRef} className="sticky top-0 h-screen overflow-hidden">
-        <div className="h-full">{children}</div>
-        <div className="pointer-events-none absolute inset-0 z-40">
+    <div ref={stageRef} className="relative">
+      <div ref={stickyRef} className="sticky top-0 z-20">
+        {children}
+        <div
+          className="pointer-events-none fixed inset-0 z-40"
+          style={{ visibility: handoffDone ? 'hidden' : 'visible' }}
+        >
           {!held && <div className="absolute inset-0 bg-[#000001]" />}
           {!held && (
             <button
@@ -431,6 +447,7 @@ function OpenerPlay({
           </motion.button>
         </div>
       </div>
+      <div className="h-[100svh]" aria-hidden="true" />
     </div>
   );
 }
