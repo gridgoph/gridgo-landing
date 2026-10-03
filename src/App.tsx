@@ -1,7 +1,6 @@
-import { Suspense, useEffect, useState, useRef } from 'react';
-import type { ForwardRefExoticComponent, HTMLAttributes, RefAttributes } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { PhoneScene } from './components/PhoneScene';
+import { Suspense, lazy, useCallback, useEffect, useState, useRef } from 'react';
+import type { ComponentType, ForwardRefExoticComponent, HTMLAttributes, MouseEvent, RefAttributes } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { EcosystemSection } from './components/EcosystemSection';
 import { HowItWorksVideos } from './components/HowItWorksVideos';
 import { Menu, X, MessageCircle, Zap, ShieldCheck, ChevronUp, ChevronDown, Moon, Sun } from 'lucide-react';
@@ -11,6 +10,17 @@ import { landingLinks } from './utils/landingLinks';
 import { useTheme } from './utils/useTheme';
 import { OpenerStage } from './components/OpenerIntro';
 
+/**
+ * three.js is most of the landing bundle and the scene is decorative, so it is
+ * its own chunk: the opener and the hero no longer wait for it. A chunk that
+ * fails to load renders nothing, the same as the scene's own error boundary.
+ */
+const PhoneScene = lazy<ComponentType<{ isDarkMode?: boolean }>>(() =>
+  import('./components/PhoneScene')
+    .then((m) => ({ default: m.PhoneScene }))
+    .catch(() => ({ default: () => null })),
+);
+
 const NAV_LINKS = [
   { href: '#features', id: 'features', label: 'Features' },
   { href: '#process', id: 'process', label: 'How it Works' },
@@ -19,7 +29,7 @@ const NAV_LINKS = [
   { href: '#about', id: 'about', label: 'About Us' },
 ] as const;
 
-function Navbar({ isDarkMode, toggleDarkMode, revealed }: { isDarkMode: boolean, toggleDarkMode: () => void, revealed: boolean }) {
+function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: boolean, toggleDarkMode: () => void, revealed: boolean, onLogo: (event: MouseEvent) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [active, setActive] = useState<string | null>(null);
@@ -57,10 +67,11 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed }: { isDarkMode: boolean,
         animate={revealed ? { y: 0, opacity: 1, filter: 'blur(0px)' } : { y: -24, opacity: 0, filter: 'blur(8px)' }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         style={{ pointerEvents: revealed ? 'auto' : 'none' }}
+        inert={!revealed}
         className="fixed top-0 left-0 right-0 z-[60] px-8 py-4 flex items-center justify-between"
       >
         {/* Logo */}
-        <a href="#hero" className="flex items-center gap-3 cursor-pointer px-5 py-2.5 rounded-full border border-black/10 dark:border-white/10 bg-transparent backdrop-blur-md text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 transition duration-500">
+        <a href="#hero" onClick={onLogo} className="flex items-center gap-3 cursor-pointer px-5 py-2.5 rounded-full border border-black/10 dark:border-white/10 bg-transparent backdrop-blur-md text-black dark:text-white hover:bg-black/5 dark:hover:bg-white/5 transition duration-500">
           <div className="grid grid-cols-3 gap-1 shrink-0">
             <div className="w-1.5 h-1.5 bg-black dark:bg-white rounded-full"></div>
             <div className="w-1.5 h-1.5 bg-black dark:bg-white rounded-full"></div>
@@ -132,6 +143,7 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed }: { isDarkMode: boolean,
 }
 
 function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed: boolean }) {
+  const reduceMotion = useReducedMotion();
   return (
     <section id="hero" className="relative z-10 flex min-h-[100svh] flex-col items-center bg-map bg-cover bg-center" style={{ backgroundImage: `url(${isDarkMode ? "/Dark_route_animation.gif" : "/Light-lights-route-animation.gif"})` }}>
       <div className="absolute inset-0 bg-white/60 dark:bg-black/40 backdrop-blur-sm dark:backdrop-blur-[3px] z-0 pointer-events-none" />
@@ -182,7 +194,7 @@ function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed:
               aria-label="Scroll to Features"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-primary)]/50 bg-white/70 text-[var(--color-primary)] backdrop-blur-md dark:bg-black/50"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1, y: [0, 6, 0] }}
+              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: [0, 6, 0] }}
               transition={{ opacity: { duration: 0.4 }, y: { duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: 0.6 } }}
             >
               <ChevronDown size={18} />
@@ -411,6 +423,9 @@ function SupportSection({ isDarkMode }: { isDarkMode?: boolean }) {
 
           <Link to="/support" className="mt-4 w-full sm:w-auto px-10 py-3.5 rounded-full bg-[var(--color-primary)] text-black font-bold text-base hover:bg-[#FFE57F] hover:scale-105 hover:shadow-[0_0_25px_rgba(255,222,88,0.3)] transition-all duration-300 relative z-10">
             Submit a Ticket Now
+          </Link>
+          <Link to="/report" className="text-sm font-semibold text-gray-700 dark:text-gray-300 underline decoration-[var(--color-primary)] decoration-2 underline-offset-4 hover:text-[var(--color-primary)] relative z-10">
+            Found a bug or want something changed? Report an issue
           </Link>
         </motion.div>
 
@@ -718,6 +733,7 @@ function FooterSection() {
             <h4 className="text-[#666] text-[13px] lowercase font-mono">more</h4>
             <div className="flex flex-col gap-5">
               <a href="#about" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">ABOUT US</a>
+              <Link to="/report" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">REPORT AN ISSUE</Link>
             </div>
           </div>
         </div>
@@ -742,6 +758,19 @@ function App() {
   const [heroReady, setHeroReady] = useState(false);
   const [navReady, setNavReady] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
+  const skipOpener = useRef<(() => void) | null>(null);
+  const showHero = useCallback(() => setHeroReady(true), []);
+  const showNav = useCallback(() => setNavReady(true), []);
+  const bindSkip = useCallback((skip: (() => void) | null) => {
+    skipOpener.current = skip;
+  }, []);
+
+  // While the opener is still up, "back to the hero" means finishing it, not scrolling into the yellow field.
+  const skipToHero = () => {
+    if (!skipOpener.current) return false;
+    skipOpener.current();
+    return true;
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -753,7 +782,7 @@ function App() {
 
   return (
     <div className="w-full relative custom-scrollbar bg-white dark:bg-black text-black dark:text-white">
-      <Navbar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} revealed={navReady} />
+      <Navbar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} revealed={navReady} onLogo={(event) => { if (skipToHero()) event.preventDefault(); }} />
 
       {/* The 3D Parallax Canvas stays fixed in the background but is now hidden in the hero section */}
       {/*
@@ -771,7 +800,7 @@ function App() {
 
       {/* Scrollable Content */}
       <div className="relative w-full">
-        <OpenerStage onHero={() => setHeroReady(true)} onNav={() => setNavReady(true)}>
+        <OpenerStage onHero={showHero} onNav={showNav} onSkipReady={bindSkip}>
           <HeroSection isDarkMode={isDarkMode} revealed={heroReady} />
         </OpenerStage>
         <FeaturesSection />
@@ -791,7 +820,7 @@ function App() {
             initial={{ opacity: 0, scale: 0.8, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => { if (!skipToHero()) window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             className="fixed bottom-8 right-8 z-50 p-3 rounded-full bg-white dark:bg-black/60 backdrop-blur-md border border-black/10 dark:border-white/10 text-black dark:text-white hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] shadow-lg transition-all duration-300"
           >
             <ChevronUp size={24} strokeWidth={2.5} />

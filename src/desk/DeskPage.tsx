@@ -98,8 +98,7 @@ function LoginScreen() {
         </div>
         <p className="text-sm text-[#8a8a8a] mb-6">Sign in with {DESK_EMAIL}.</p>
         <SignIn
-          // @ts-expect-error Desk uses virtual routing; Clerk's types only list path and hash.
-          routing="virtual"
+          routing="hash"
           withSignUp={false}
           fallbackRedirectUrl="/desk"
           appearance={{
