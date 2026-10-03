@@ -78,6 +78,28 @@ body {
   background-attachment: fixed;
 }
 
+.print-stop {
+  display: inline-block;
+  width: 0.17em;
+  height: 0.17em;
+  margin-left: 0.08em;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: transparent;
+  line-height: 0;
+  vertical-align: 0.12em;
+}
+
+#features,
+#process,
+#ecosystem,
+#support,
+#about,
+#download {
+  scroll-margin-top: 5.5rem;
+}
+
 .desk-sign-in .cl-card,
 .desk-sign-in .cl-cardBox,
 .desk-sign-in .cl-footer,

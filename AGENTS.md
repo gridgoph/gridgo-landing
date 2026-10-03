@@ -86,6 +86,13 @@ that inlined form.
   scrolled the page sideways until its container got `overflow-x-hidden`. Check
   `document.documentElement.scrollWidth` against the *nominal* viewport width —
   `window.innerWidth` inflates under mobile emulation and hides the bug.
+- **The opener is one-way and once per session** (`src/components/OpenerIntro.tsx`).
+  When the yellow field lands on the Print stop, or the visitor skips, the overlay
+  and its 100svh spacer unmount and the scroll is compensated, so the top of the
+  page is the hero from then on. `sessionStorage` remembers it has played. To see
+  it again, clear `gridgo-opener-played`. Anything that means "go to the hero"
+  while it is up (logo, back-to-top) must call the skip that `App` gets through
+  `onSkipReady`, because scrolling to 0 lands back on the yellow field.
 - **The hero depends on third-party origins** (`raw.githack.com`,
   `cdn.jsdelivr.net` for drei's environment map and troika's font, plus the
   How it Works YouTube walkthroughs). If they are blocked the scene degrades
