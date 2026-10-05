@@ -3,12 +3,14 @@ import { animate, motion, useMotionValue, useReducedMotion, useTransform, type M
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
- * Pitch opener, then a one-way scroll handoff.
+ * Pitch opener, once per browsing session.
  * Dots cascade, the top-right one takes the screen, and the yellow wordmark holds.
- * Scrolling shrinks that yellow field onto the period after "Print." Once it
- * lands, the overlay and its scroll room come down for good, so the top of the
- * page is the hero from then on. It plays once per browsing session.
+ * The yellow field then shrinks on its own onto the period after "Print."
+ * Skip or scroll still finishes it early. Once it lands, the overlay and its
+ * scroll room come down for good, so the top of the page is the hero.
  */
+const HANDOFF_HOLD = 700;
+const HANDOFF_MS = 1400;
 const CENTRES = [0.15, 0.5, 0.85];
 const RADIUS = 0.13;
 const LIT_CELL = 2;
@@ -214,7 +216,6 @@ function OpenerPlay({
   const hold = useCallback(() => {
     if (heldRef.current) return;
     heldRef.current = true;
-    stopRef.current();
     engulf.set(1);
     word.set(1);
     after.set(1);
@@ -228,6 +229,7 @@ function OpenerPlay({
   const finish = useCallback(
     (to: 'top' | 'keep') => {
       if (doneRef.current) return;
+      stopRef.current();
       hold();
       doneRef.current = true;
       showNav();
@@ -309,9 +311,25 @@ function OpenerPlay({
         ease: EASE_OUT,
       }),
     ];
-    const timer = window.setTimeout(hold, LINE_AT + LINE_MS);
+    const settle = window.setTimeout(hold, LINE_AT + LINE_MS);
+    let handoffRun: { stop: () => void } | null = null;
+    const handoff = window.setTimeout(() => {
+      hold();
+      measure();
+      handoffRun = animate(progress, 1, {
+        duration: HANDOFF_MS / 1000,
+        ease: 'linear',
+        onUpdate: (value) => {
+          place(value);
+          if (value > 0.18) showNav();
+        },
+        onComplete: () => finish('top'),
+      });
+    }, LINE_AT + LINE_MS + HANDOFF_HOLD);
     stopRef.current = () => {
-      window.clearTimeout(timer);
+      window.clearTimeout(settle);
+      window.clearTimeout(handoff);
+      handoffRun?.stop();
       runs.forEach((run) => run.stop());
     };
 
@@ -319,7 +337,7 @@ function OpenerPlay({
       stopRef.current();
       if (!heldRef.current) document.body.style.overflow = previousOverflow.current;
     };
-  }, [cascade, engulf, word, after, hold]);
+  }, [cascade, engulf, word, after, hold, measure, place, progress, showNav, finish]);
 
   useEffect(() => {
     if (done) return;

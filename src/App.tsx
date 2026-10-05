@@ -148,59 +148,61 @@ function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed:
     <section id="hero" className="relative z-10 flex min-h-[100svh] flex-col items-center bg-map bg-cover bg-center" style={{ backgroundImage: `url(${isDarkMode ? "/Dark_route_animation.gif" : "/Light-lights-route-animation.gif"})` }}>
       <div className="absolute inset-0 bg-white/60 dark:bg-black/40 backdrop-blur-sm dark:backdrop-blur-[3px] z-0 pointer-events-none" />
 
-      {/* Content wrapper */}
-      <div className="relative z-10 flex min-h-[100svh] w-full flex-col items-center px-4 pt-24 text-center md:pt-32">
-        {/* Logo and Tagline */}
-        <motion.div
-          initial={false}
-          animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 20, filter: 'blur(10px)' }}
-          transition={{ duration: 0 }}
-          className="flex flex-col items-center mb-1"
-        >
-          {/* 3x3 Grid Logo */}
-          <div className="grid grid-cols-3 gap-1.5 mb-1">
-            <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full"></div>
-            <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full"></div>
-            <div className="w-2.5 h-2.5 bg-[var(--color-primary)] rounded-full"></div>
-            <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full"></div>
-            <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full"></div>
-            <div className="w-2.5 h-2.5 bg-gray-400 rounded-full"></div>
-            <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full"></div>
-            <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full"></div>
-            <div className="w-2.5 h-2.5 bg-gray-400 rounded-full"></div>
-          </div>
-          <span className="text-4xl font-black tracking-widest uppercase mt-1">GRID<span className="text-[var(--color-primary)]">GO</span></span>
-          <p className="text-[11px] md:text-sm tracking-[0.3em] uppercase mt-1.5 font-semibold text-gray-800 dark:text-gray-200">
-            MAPPING THE FUTURE OF PRINTING.
-          </p>
-        </motion.div>
+      {/* Copy sits in the open area above the phone and stays centered as the viewport changes */}
+      <div className="relative z-10 flex min-h-[100svh] w-full flex-col items-center px-5 pt-20 text-center sm:px-6 md:pt-24">
+        <div className="flex w-full max-w-3xl flex-1 flex-col items-center justify-center pb-[22vh] sm:pb-[20vh] md:pb-[24vh]">
+          {/* Logo and Tagline */}
+          <motion.div
+            initial={false}
+            animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 20, filter: 'blur(10px)' }}
+            transition={{ duration: 0 }}
+            className="mb-1 flex w-full flex-col items-center"
+          >
+            {/* 3x3 Grid Logo */}
+            <div className="mb-1 grid grid-cols-3 gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-black dark:bg-white"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-black dark:bg-white"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-[var(--color-primary)]"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-black dark:bg-white"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-black dark:bg-white"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-gray-400"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-black dark:bg-white"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-black dark:bg-white"></div>
+              <div className="h-2.5 w-2.5 rounded-full bg-gray-400"></div>
+            </div>
+            <span className="mt-1 text-3xl font-black uppercase tracking-widest sm:text-4xl">GRID<span className="text-[var(--color-primary)]">GO</span></span>
+            <p className="mt-1.5 max-w-full text-[10px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-gray-800 dark:text-gray-200 sm:text-[11px] sm:tracking-[0.22em] md:text-sm md:tracking-[0.3em]">
+              Mapping the future of printing.
+            </p>
+          </motion.div>
 
-        {/* Main Headings */}
-        <motion.div
-          initial={false}
-          animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 20, filter: 'blur(10px)' }}
-          transition={{ duration: 0 }}
-          className="relative z-20 max-w-3xl flex flex-col items-center"
-        >
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-[var(--color-primary)] mb-2 tracking-tight">
-            Design. Tap. <span className="whitespace-nowrap">Print<span data-print-dot className="print-stop">.</span></span>
-          </h1>
-          <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-2 font-medium leading-relaxed">
-            Send your files from the app straight to our printers. We'll handle the printing and deliver it to your door so you don't have to leave your seat.
-          </p>
-          {revealed && (
-            <motion.a
-              href="#features"
-              aria-label="Scroll to Features"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-primary)]/50 bg-white/70 text-[var(--color-primary)] backdrop-blur-md dark:bg-black/50"
-              initial={{ opacity: 0 }}
-              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: [0, 6, 0] }}
-              transition={{ opacity: { duration: 0.4 }, y: { duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: 0.6 } }}
-            >
-              <ChevronDown size={18} />
-            </motion.a>
-          )}
-        </motion.div>
+          {/* Main Headings */}
+          <motion.div
+            initial={false}
+            animate={revealed ? { opacity: 1, y: 0, filter: 'blur(0px)' } : { opacity: 0, y: 20, filter: 'blur(10px)' }}
+            transition={{ duration: 0 }}
+            className="relative z-20 flex w-full max-w-3xl flex-col items-center"
+          >
+            <h1 className="mb-3 w-full text-balance text-[2.35rem] font-bold leading-[1.08] tracking-tight text-[var(--color-primary)] sm:text-5xl md:text-6xl lg:text-7xl">
+              Design. Tap. <span className="whitespace-nowrap">Print<span data-print-dot className="print-stop">.</span></span>
+            </h1>
+            <p className="mx-auto mb-2 w-full max-w-2xl text-base font-medium leading-relaxed text-gray-700 dark:text-gray-300 sm:text-lg md:text-xl">
+              Send your files from the app straight to our printers. We'll handle the printing and deliver it to your door so you don't have to leave your seat.
+            </p>
+            {revealed && (
+              <motion.a
+                href="#features"
+                aria-label="Scroll to Features"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-primary)]/50 bg-white/70 text-[var(--color-primary)] backdrop-blur-md dark:bg-black/50"
+                initial={{ opacity: 0 }}
+                animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: [0, 6, 0] }}
+                transition={{ opacity: { duration: 0.4 }, y: { duration: 1.6, repeat: Infinity, ease: 'easeInOut', delay: 0.6 } }}
+              >
+                <ChevronDown size={18} />
+              </motion.a>
+            )}
+          </motion.div>
+        </div>
       </div>
 
       {/* Phone Mockup at bottom */}
