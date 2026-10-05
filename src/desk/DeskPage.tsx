@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { ClerkProvider, SignIn, useAuth, useClerk, useUser } from '@clerk/react';
+import { ClerkProvider, SignIn, useAuth, useClerk } from '@clerk/react';
 import { Mark } from './Mark';
 import {
+  checkDeskAccess,
   deleteTicket,
   listTickets,
   replyToTicket,
   setTokenProvider,
+  type DeskAccess,
   type Ticket,
 } from './api';
 
-const DESK_EMAIL = 'gridgo26@gmail.com';
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() ?? '';
 
 type Filter = 'open' | 'closed' | 'all';
@@ -41,48 +42,83 @@ export function DeskPage() {
 }
 
 function DeskGate() {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { isLoaded, isSignedIn, userId, getToken } = useAuth();
   const { signOut } = useClerk();
-  const { user } = useUser();
-  const email = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() ?? '';
+  const [access, setAccess] = useState<{ userId: string; result: DeskAccess } | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     setTokenProvider(() => getToken());
     return () => setTokenProvider(null);
   }, [getToken]);
 
+  // Who may use the desk is gridgo-api's call, so ask it for every signed-in account.
+  useEffect(() => {
+    if (!isSignedIn || !userId) return;
+    let cancelled = false;
+    checkDeskAccess().then((result) => {
+      if (!cancelled) setAccess({ userId, result });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn, userId, attempt]);
+
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen grid place-items-center bg-[#070707] text-[#8a8a8a] tracking-[0.3em] uppercase text-xs">
-        Opening desk
-      </div>
-    );
+    return <DeskStatus>Opening desk</DeskStatus>;
   }
 
   if (!isSignedIn) {
     return <LoginScreen />;
   }
 
-  if (email !== DESK_EMAIL) {
+  const result = access?.userId === userId ? access.result : null;
+  if (!result) {
+    return <DeskStatus>Checking desk access</DeskStatus>;
+  }
+
+  if (!result.allowed) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6 bg-[#070707] text-[#f4f4f4]">
         <div className="w-full max-w-md">
           <p className="text-sm text-[#8a8a8a] mb-6">
-            This desk only accepts {DESK_EMAIL}.
+            {result.message}
           </p>
-          <button
-            type="button"
-            onClick={() => signOut()}
-            className="py-3 px-6 bg-[#FFDE58] text-black font-bold tracking-wide"
-          >
-            Sign out
-          </button>
+          <div className="flex flex-wrap gap-4">
+            {result.denied ? null : (
+              <button
+                type="button"
+                onClick={() => {
+                  setAccess(null);
+                  setAttempt((count) => count + 1);
+                }}
+                className="py-3 px-6 border border-[#FFDE58] text-[#FFDE58] font-bold tracking-wide"
+              >
+                Try again
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="py-3 px-6 bg-[#FFDE58] text-black font-bold tracking-wide"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  return <Desk username={email} onSignOut={() => signOut()} />;
+  return <Desk username={result.email} onSignOut={() => signOut()} />;
+}
+
+function DeskStatus({ children }: { children: string }) {
+  return (
+    <div className="min-h-screen grid place-items-center bg-[#070707] text-[#8a8a8a] tracking-[0.3em] uppercase text-xs">
+      {children}
+    </div>
+  );
 }
 
 function LoginScreen() {
@@ -96,7 +132,7 @@ function LoginScreen() {
             <p className="text-[11px] uppercase tracking-[0.28em] text-[#8a8a8a]">Ticketing desk</p>
           </div>
         </div>
-        <p className="text-sm text-[#8a8a8a] mb-6">Sign in with {DESK_EMAIL}.</p>
+        <p className="text-sm text-[#8a8a8a] mb-6">Sign in with a support desk account.</p>
         <SignIn
           routing="hash"
           withSignUp={false}
@@ -163,7 +199,7 @@ function Desk({ username, onSignOut }: { username: string; onSignOut: () => void
 
   return (
     <div className="min-h-screen grid grid-rows-[auto_1fr] bg-[#070707] text-[#f4f4f4]">
-      <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-[#262626]">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-6 py-4 border-b border-[#262626]">
         <div className="flex items-center gap-3">
           <Mark size={18} />
           <div>
@@ -171,11 +207,11 @@ function Desk({ username, onSignOut }: { username: string; onSignOut: () => void
             <p className="text-[10px] uppercase tracking-[0.28em] text-[#8a8a8a]">Ticketing desk</p>
           </div>
         </div>
-        <div className="flex items-center gap-6 text-sm">
-          <p className="text-[#8a8a8a]">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm min-w-0">
+          <p className="text-[#8a8a8a] whitespace-nowrap">
             {openCount} open
           </p>
-          <p>{username}</p>
+          <p className="min-w-0 break-all">{username}</p>
           <button type="button" onClick={onSignOut} className="text-[#FFDE58]">
             Sign out
           </button>
