@@ -3,12 +3,14 @@ import { animate, motion, useMotionValue, useReducedMotion, useTransform, type M
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
- * Pitch opener, then a one-way scroll handoff.
+ * Pitch opener, once per browsing session.
  * Dots cascade, the top-right one takes the screen, and the yellow wordmark holds.
- * Scrolling shrinks that yellow field onto the period after "Print." Once it
- * lands, the overlay and its scroll room come down for good, so the top of the
- * page is the hero from then on. It plays once per browsing session.
+ * The yellow field then shrinks on its own onto the period after "Print."
+ * Skip or scroll still finishes it early. Once it lands, the overlay and its
+ * scroll room come down for good, so the top of the page is the hero.
  */
+const HANDOFF_HOLD = 700;
+const HANDOFF_MS = 1400;
 const CENTRES = [0.15, 0.5, 0.85];
 const RADIUS = 0.13;
 const LIT_CELL = 2;
@@ -193,6 +195,8 @@ function OpenerPlay({
   const word = useMotionValue(0);
   const after = useMotionValue(0);
   const progress = useMotionValue(0);
+  // 1 while the field shrinks on its own; a click then still means "skip".
+  const autoHandoff = useMotionValue(0);
   const circleX = useMotionValue(0);
   const circleY = useMotionValue(0);
   const circleScale = useMotionValue(1);
@@ -214,7 +218,6 @@ function OpenerPlay({
   const hold = useCallback(() => {
     if (heldRef.current) return;
     heldRef.current = true;
-    stopRef.current();
     engulf.set(1);
     word.set(1);
     after.set(1);
@@ -228,6 +231,7 @@ function OpenerPlay({
   const finish = useCallback(
     (to: 'top' | 'keep') => {
       if (doneRef.current) return;
+      stopRef.current();
       hold();
       doneRef.current = true;
       showNav();
@@ -309,9 +313,34 @@ function OpenerPlay({
         ease: EASE_OUT,
       }),
     ];
-    const timer = window.setTimeout(hold, LINE_AT + LINE_MS);
+    const settle = window.setTimeout(hold, LINE_AT + LINE_MS);
+    let handoffRun: { stop: () => void } | null = null;
+    // The nav fades in above the overlay mid hand-off; a click on it still means "skip".
+    const skipOnClick = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      finish('top');
+    };
+    const handoff = window.setTimeout(() => {
+      hold();
+      measure();
+      autoHandoff.set(1);
+      window.addEventListener('click', skipOnClick, true);
+      handoffRun = animate(progress, 1, {
+        duration: HANDOFF_MS / 1000,
+        ease: 'linear',
+        onUpdate: (value) => {
+          place(value);
+          if (value > 0.18) showNav();
+        },
+        onComplete: () => finish('top'),
+      });
+    }, LINE_AT + LINE_MS + HANDOFF_HOLD);
     stopRef.current = () => {
-      window.clearTimeout(timer);
+      window.clearTimeout(settle);
+      window.clearTimeout(handoff);
+      window.removeEventListener('click', skipOnClick, true);
+      handoffRun?.stop();
       runs.forEach((run) => run.stop());
     };
 
@@ -319,7 +348,7 @@ function OpenerPlay({
       stopRef.current();
       if (!heldRef.current) document.body.style.overflow = previousOverflow.current;
     };
-  }, [cascade, engulf, word, after, hold]);
+  }, [cascade, engulf, word, after, autoHandoff, hold, measure, place, progress, showNav, finish]);
 
   useEffect(() => {
     if (done) return;
@@ -404,7 +433,8 @@ function OpenerPlay({
     const fade = clamp01((progress.get() - 0.02) / 0.22);
     return word.get() * (1 - fade);
   });
-  const skipPointer = useTransform(progress, (p) => (p < 0.02 ? 'auto' : 'none'));
+  // A scroll-driven hand-off lets clicks reach the page; the automatic one keeps them for the skip.
+  const skipPointer = useTransform(() => (autoHandoff.get() || progress.get() < 0.02 ? 'auto' : 'none'));
   const lineY = useTransform(after, [0, 1], [18, 0]);
 
   const viewHero = () => {
