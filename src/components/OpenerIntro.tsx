@@ -195,6 +195,8 @@ function OpenerPlay({
   const word = useMotionValue(0);
   const after = useMotionValue(0);
   const progress = useMotionValue(0);
+  // 1 while the field shrinks on its own; a click then still means "skip".
+  const autoHandoff = useMotionValue(0);
   const circleX = useMotionValue(0);
   const circleY = useMotionValue(0);
   const circleScale = useMotionValue(1);
@@ -313,9 +315,17 @@ function OpenerPlay({
     ];
     const settle = window.setTimeout(hold, LINE_AT + LINE_MS);
     let handoffRun: { stop: () => void } | null = null;
+    // The nav fades in above the overlay mid hand-off; a click on it still means "skip".
+    const skipOnClick = (event: MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      finish('top');
+    };
     const handoff = window.setTimeout(() => {
       hold();
       measure();
+      autoHandoff.set(1);
+      window.addEventListener('click', skipOnClick, true);
       handoffRun = animate(progress, 1, {
         duration: HANDOFF_MS / 1000,
         ease: 'linear',
@@ -329,6 +339,7 @@ function OpenerPlay({
     stopRef.current = () => {
       window.clearTimeout(settle);
       window.clearTimeout(handoff);
+      window.removeEventListener('click', skipOnClick, true);
       handoffRun?.stop();
       runs.forEach((run) => run.stop());
     };
@@ -337,7 +348,7 @@ function OpenerPlay({
       stopRef.current();
       if (!heldRef.current) document.body.style.overflow = previousOverflow.current;
     };
-  }, [cascade, engulf, word, after, hold, measure, place, progress, showNav, finish]);
+  }, [cascade, engulf, word, after, autoHandoff, hold, measure, place, progress, showNav, finish]);
 
   useEffect(() => {
     if (done) return;
@@ -422,7 +433,8 @@ function OpenerPlay({
     const fade = clamp01((progress.get() - 0.02) / 0.22);
     return word.get() * (1 - fade);
   });
-  const skipPointer = useTransform(progress, (p) => (p < 0.02 ? 'auto' : 'none'));
+  // A scroll-driven hand-off lets clicks reach the page; the automatic one keeps them for the skip.
+  const skipPointer = useTransform(() => (autoHandoff.get() || progress.get() < 0.02 ? 'auto' : 'none'));
   const lineY = useTransform(after, [0, 1], [18, 0]);
 
   const viewHero = () => {
