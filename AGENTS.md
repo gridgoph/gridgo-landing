@@ -47,7 +47,8 @@ to `:8787`, which must not strip `/api`. Support form fields stay white in
 dark mode so typed text is readable. `/desk` is the operator desk; it is not
 linked from the public nav. It signs in with Clerk (the dashboard's instance,
 `VITE_CLERK_PUBLISHABLE_KEY`, from the `CLERK_PUBLISHABLE_KEY` repo variable in
-CI); gridgo-api decides who may use it via `SUPPORT_DESK_ALLOWED_EMAILS` and
+CI); gridgo-api decides who may use it via `SUPPORT_DESK_ALLOWED_EMAILS` — the
+screen asks `GET /admin/me` and never keeps its own address — and
 must list `https://gridgo.talasora.com` in `CLERK_AUTHORIZED_PARTIES`.
 
 **A `VITE_*` value only reaches the bundle if rendered markup reads it.** The
