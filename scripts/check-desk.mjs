@@ -53,7 +53,21 @@ assert(
 );
 assert(api.includes('setTokenProvider'), 'Desk requests should attach the Clerk session token.');
 assert(desk.includes('@clerk/react'), 'The desk should sign in with Clerk.');
-assert(desk.includes('gridgo26@gmail.com'), 'The desk should only accept the support Gmail.');
+// gridgo-api owns the desk allowlist (SUPPORT_DESK_ALLOWED_EMAILS). The screen
+// asks GET /admin/me, so every address the API allows opens the desk.
+assert(
+  /request<[^>]*>\('\/admin\/me'\)/.test(api),
+  'Desk access should be checked against the API at /admin/me.',
+);
+assert(desk.includes('checkDeskAccess'), 'The desk gate should use the API access check.');
+assert(
+  !/@[a-z0-9-]+\.[a-z]{2,}/i.test(desk) && !/DESK_EMAIL/.test(desk),
+  'The desk must not hard-code an allowed email; the API decides.',
+);
+assert(
+  /username=\{result\.email\}/.test(desk),
+  'The desk should show the email the API confirmed.',
+);
 assert(!api.includes('/admin/login'), 'The desk should not post a username and password.');
 assert(
   /^ARG VITE_CLERK_PUBLISHABLE_KEY$/m.test(dockerfile) &&
