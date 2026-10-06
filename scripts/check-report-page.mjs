@@ -10,12 +10,12 @@ import { dirname, resolve } from 'node:path';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(scriptDir, p), 'utf8');
 
-const main = read('../src/main.tsx');
+const routeTable = read('../src/AppRoutes.tsx');
 const routes = read('../src/routes.tsx');
 const page = read('../src/ReportPage.tsx');
 const app = read('../src/App.tsx');
 
-assert(main.includes('<Route path="/report" element={<ReportRoute />} />'), 'The /report route should be registered.');
+assert(routeTable.includes('<Route path="/report" element={<ReportRoute />} />'), 'The /report route should be registered.');
 assert(/ReportRoute\s*=\s*lazy\([\s\S]*?ReportPage/.test(routes), '/report should lazy-load the report page.');
 assert(page.includes('`${apiBaseUrl}/issue-reports`'), 'The report form should post to gridgo-api /issue-reports.');
 assert(!/localhost|127\.0\.0\.1/.test(page), 'The report page must not ship a local host.');

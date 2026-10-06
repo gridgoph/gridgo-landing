@@ -1,23 +1,23 @@
-import { StrictMode, Suspense } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { StrictMode } from 'react'
+import { createRoot, hydrateRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import './index.css'
-import { LandingRoute, SupportRoute, DownloadRoute, DeskRoute, ReportRoute } from './routes'
-import { ScrollBehaviour } from './utils/ScrollBehaviour'
+import { AppRoutes } from './AppRoutes'
 
-createRoot(document.getElementById('root')!).render(
+const container = document.getElementById('root')!
+const app = (
   <StrictMode>
     <BrowserRouter>
-      <ScrollBehaviour />
-      <Suspense fallback={<div className="min-h-screen bg-white dark:bg-black" />}>
-        <Routes>
-          <Route path="/" element={<LandingRoute />} />
-          <Route path="/support" element={<SupportRoute />} />
-          <Route path="/download" element={<DownloadRoute />} />
-          <Route path="/desk" element={<DeskRoute />} />
-          <Route path="/report" element={<ReportRoute />} />
-        </Routes>
-      </Suspense>
+      <AppRoutes />
     </BrowserRouter>
-  </StrictMode>,
+  </StrictMode>
 )
+
+// /privacy and /delete-account arrive with their text already in the HTML
+// (scripts/prerender-legal.mjs). Hydrating keeps that text on screen while the
+// route's chunk loads; every other route starts from an empty root.
+if (container.hasChildNodes()) {
+  hydrateRoot(container, app)
+} else {
+  createRoot(container).render(app)
+}

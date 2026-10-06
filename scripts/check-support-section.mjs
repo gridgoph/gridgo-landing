@@ -5,7 +5,7 @@ import { dirname, resolve } from 'node:path';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const app = readFileSync(resolve(scriptDir, '../src/App.tsx'), 'utf8');
-const main = readFileSync(resolve(scriptDir, '../src/main.tsx'), 'utf8');
+const routeTable = readFileSync(resolve(scriptDir, '../src/AppRoutes.tsx'), 'utf8');
 const routes = readFileSync(resolve(scriptDir, '../src/routes.tsx'), 'utf8');
 const support = readFileSync(resolve(scriptDir, '../src/SupportPage.tsx'), 'utf8');
 
@@ -25,7 +25,7 @@ assert(supportLinks.length >= 1, 'The support CTA should route to /support.');
 // The routes are lazy-loaded (see src/routes.tsx), so each one is wired in two
 // places: the route table and the chunk it resolves to.
 assert(
-  main.includes('<Route path="/support" element={<SupportRoute />} />'),
+  routeTable.includes('<Route path="/support" element={<SupportRoute />} />'),
   'The /support route should be registered in the route table.',
 );
 assert(
