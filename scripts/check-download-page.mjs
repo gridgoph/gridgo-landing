@@ -11,7 +11,7 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(scriptDir, p), 'utf8');
 
 const app = read('../src/App.tsx');
-const main = read('../src/main.tsx');
+const routeTable = read('../src/AppRoutes.tsx');
 const routes = read('../src/routes.tsx');
 const page = read('../src/DownloadPage.tsx');
 const links = read('../src/utils/landingLinks.ts');
@@ -21,7 +21,7 @@ const compose = read('../deploy/docker-compose.yml');
 
 // ── Routing ───────────────────────────────────────────────────────────────
 assert(
-  main.includes('<Route path="/download" element={<DownloadRoute />} />'),
+  routeTable.includes('<Route path="/download" element={<DownloadRoute />} />'),
   'The /download route should be registered in the route table.',
 );
 assert(

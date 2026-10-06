@@ -153,3 +153,76 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/*
+ * Long-form text on /privacy and /delete-account. Plain CSS rather than a
+ * typography plugin: two pages do not justify a dependency.
+ */
+.legal-prose {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #374151;
+}
+
+.dark .legal-prose {
+  color: #d1d5db;
+}
+
+.legal-prose > * + * {
+  margin-top: 1rem;
+}
+
+.legal-prose h3 {
+  margin-top: 1.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #000;
+}
+
+.dark .legal-prose h3 {
+  color: #fff;
+}
+
+.legal-prose strong {
+  color: #000;
+  font-weight: 700;
+}
+
+.dark .legal-prose strong {
+  color: #fff;
+}
+
+.legal-prose ul,
+.legal-prose ol {
+  padding-left: 1.25rem;
+}
+
+.legal-prose ul {
+  list-style: disc;
+}
+
+.legal-prose ol {
+  list-style: decimal;
+}
+
+.legal-prose li + li {
+  margin-top: 0.4rem;
+}
+
+.legal-prose li::marker {
+  color: var(--color-primary);
+}
+
+.legal-prose a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-primary);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.legal-prose a:hover {
+  color: var(--color-primary);
+}

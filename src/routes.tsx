@@ -22,3 +22,11 @@ export const DeskRoute = lazy(() =>
 export const ReportRoute = lazy(() =>
   import('./ReportPage').then((m) => ({ default: m.ReportPage })),
 )
+
+export const PrivacyRoute = lazy(() =>
+  import('./legal/PrivacyPage').then((m) => ({ default: m.PrivacyPage })),
+)
+
+export const DeleteAccountRoute = lazy(() =>
+  import('./legal/DeleteAccountPage').then((m) => ({ default: m.DeleteAccountPage })),
+)

@@ -13,8 +13,9 @@ and `@react-three/fiber` + `drei` + `three` for the fixed 3D layer. Routing is
 `react-router-dom`. See `package.json` for the commands; `npm test` runs the
 check scripts under `scripts/`.
 
-Four routes, all in `src/routes.tsx`: `/` (landing), `/support`, `/download`,
-`/desk` (ticketing desk). Tickets live in GRIDGO Postgres via **gridgo-api**.
+Routes are in `src/AppRoutes.tsx` (chunks in `src/routes.tsx`): `/` (landing),
+`/support`, `/download`, `/desk` (ticketing desk), `/report`, `/privacy` and
+`/delete-account`. Tickets live in GRIDGO Postgres via **gridgo-api**.
 Do not add a sidecar Express/Supabase process — production landing is static
 nginx, and CI deploy only runs the word `landing`.
 
@@ -59,6 +60,16 @@ job rejected the build. `check-claims.mjs` now asserts a rendered link uses
 `dashboardUrl`. Clerk reads `import.meta.env` whole, so the DeskPage chunk
 carries every `VITE_*` name next to its value; the deploy guard allows only
 that inlined form.
+
+**`/privacy` and `/delete-account` are the URLs in Google Play Console.** They
+must stay readable without JavaScript: `npm run build` prerenders them into
+`dist/<route>.html` (`scripts/prerender-legal.mjs`, same tree as the browser via
+`src/prerender.ts`), nginx serves that file first (`try_files $uri $uri.html`),
+and `main.tsx` hydrates it, so nothing on those pages may render differently on
+the server (no markup branching on the theme). Their text was checked against
+the API and app code; when an app starts collecting something new or a
+retention rule changes, update the page and both dates in
+`src/legal/legalPages.ts`.
 
 ## Sharp edges found the hard way
 
