@@ -41,7 +41,9 @@ function forbid(pattern, message) {
 // ── Commercially sensitive detail ─────────────────────────────────────────
 // GRIDGO's commission is never shown to a client, and the supplier payout
 // split is an in-app contract detail. Neither belongs on a public page.
-forbid(/commission/i, 'GRIDGO commission must never appear on the public site.');
+// The privacy pages must name the regulator, the National Privacy Commission;
+// that is the one "commission" a public page may mention.
+forbid(/(?<!National Privacy )commission/i, 'GRIDGO commission must never appear on the public site.');
 forbid(
   /\b(50|15|25|10)\s*%\s*(of\s*)?(the\s*)?(supplier|partner|payout|milestone)/i,
   'Supplier payout percentages should not be published on the landing page.',

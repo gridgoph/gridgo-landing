@@ -10,7 +10,7 @@ import { dirname, resolve } from 'node:path';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(resolve(scriptDir, p), 'utf8');
 
-const main = read('../src/main.tsx');
+const routeTable = read('../src/AppRoutes.tsx');
 const routes = read('../src/routes.tsx');
 const api = read('../src/desk/api.ts');
 const desk = read('../src/desk/DeskPage.tsx');
@@ -27,7 +27,7 @@ assert(
 );
 
 assert(
-  main.includes('<Route path="/desk" element={<DeskRoute />} />'),
+  routeTable.includes('<Route path="/desk" element={<DeskRoute />} />'),
   'The /desk route should be registered in the route table.',
 );
 assert(

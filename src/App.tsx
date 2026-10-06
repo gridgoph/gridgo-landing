@@ -746,7 +746,9 @@ function FooterSection() {
         <p className="max-w-[400px] leading-relaxed">
           A modern platform for digital printing combining precision technology, high-quality output, and seamless logistics.
         </p>
-        <div className="flex gap-8 uppercase tracking-widest">
+        <div className="flex flex-wrap gap-x-8 gap-y-3 uppercase tracking-widest">
+          <Link to="/privacy" className="hover:text-[var(--color-primary)] transition-colors">PRIVACY POLICY</Link>
+          <Link to="/delete-account" className="hover:text-[var(--color-primary)] transition-colors">DELETE ACCOUNT</Link>
           <span>&copy; 2026 GRIDGO</span>
           <span>ALL RIGHTS RESERVED</span>
         </div>
