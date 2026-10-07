@@ -384,13 +384,13 @@ const sections: LegalSection[] = [
       <>
         <p>
           You can ask us to delete your GRIDGO account and personal data at any time, from inside the app
-          (through support chat) or from the web (by emailing {mail} from your account’s email address). We
+          (Account → Delete account) or from the web form on our deletion page. You can also email {mail}. We
           confirm it is you, finish anything still open on your orders, and delete your account within 30 days.
         </p>
         <p>
           Some records must be kept for a while after that, such as payment records for 5 years. The full
           details, including what we delete and what we keep, are on{' '}
-          <Link to="/delete-account">Delete your GRIDGO account</Link>. A Delete account button is coming to the apps.
+          <Link to="/delete-account">Delete your GRIDGO account</Link>. Use the latest app for the Delete account entry, or send the same request on the web.
         </p>
       </>
     ),
