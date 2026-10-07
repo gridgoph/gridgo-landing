@@ -1,3 +1,4 @@
+import { DeletionRequestForm } from "./DeletionRequestForm";
 import { Link } from 'react-router-dom';
 import { LegalLayout } from './LegalLayout';
 import type { LegalSection } from './LegalLayout';
@@ -38,6 +39,9 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>You can ask in any of these ways. Each one works for all GRIDGO apps.</p>
+        <h3>Through this website</h3>
+        <p>Enter your account email below. Operations verifies ownership before deleting anything.</p>
+        <DeletionRequestForm />
         <h3>By email (from anywhere, including the web)</h3>
         <ol>
           <li>
@@ -52,17 +56,9 @@ const sections: LegalSection[] = [
         </ol>
         <h3>Inside the app</h3>
         <p>
-          Open the app, go to <strong>Help</strong> or <strong>Support</strong>, and send GRIDGO support the
-          message “Please delete my account”. Because you are signed in, we already know which account it is.
-        </p>
-        <h3>Through the website</h3>
-        <p>
-          Fill in the form at <Link to="/support">gridgo.talasora.com/support</Link> with the email address
-          of your account, and ask for your account to be deleted.
-        </p>
-        <p>
-          <strong>A Delete account button is coming to the apps.</strong> Until it arrives, the ways above
-          are how to ask, and we act on every request.
+          Open <strong>Account → Delete account</strong> in the latest app, read the warning,
+          then confirm your request. Operations will process it manually within 30 days.
+          If your app does not have this entry yet, use this web form or email us.
         </p>
       </>
     ),
@@ -83,7 +79,7 @@ const sections: LegalSection[] = [
           or close it first so that nobody loses money.
         </li>
         <li>
-          <strong>We delete your account within 30 days</strong> of confirming your request, and email you
+          <strong>We delete your account within 30 days</strong> of receiving your request, and email you
           when it is done. You can no longer sign in after that, and the account cannot be restored. You are
           welcome to create a new one later.
         </li>

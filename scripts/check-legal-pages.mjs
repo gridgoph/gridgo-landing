@@ -81,7 +81,7 @@ for (const [needle, why] of [
   ['id: \'what-we-delete\'', 'say what is deleted'],
   ['id: \'what-we-keep\'', 'say what is kept and why'],
   ['Inside the app', 'explain how to ask from inside the apps'],
-  ['Delete account button is coming', 'say in-app deletion is on its way'],
+  ['Account → Delete account', 'explain the in-app deletion request entry'],
 ]) {
   assert(deletion.includes(needle), `The deletion page should ${why}.`);
 }

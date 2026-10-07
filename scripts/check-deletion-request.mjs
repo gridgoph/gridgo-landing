@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { submitDeletionRequest } from '../src/legal/deletionRequest.ts';
+let called;
+const fetchImpl = async (url, init) => { called = { url, init }; return new Response('{"ok":true}', { status: 202 }); };
+await submitDeletionRequest('account@example.test', true, '/api', fetchImpl);
+assert.equal(called.url, '/api/account-deletion-requests');
+assert.deepEqual(JSON.parse(called.init.body), { email: 'account@example.test', confirmed: true });
+await assert.rejects(submitDeletionRequest('bad', true, '/api', fetchImpl), /email/i);
+await assert.rejects(submitDeletionRequest('account@example.test', false, '/api', fetchImpl), /confirm/i);
+await assert.rejects(submitDeletionRequest('account@example.test', true, '/api', async () => new Response('', { status: 429 })), /wait/i);
+await assert.rejects(submitDeletionRequest('account@example.test', true, '/api', async () => new Response('', { status: 500 })), /try again/i);
+console.log('Deletion request validation, payload, success and failure: passed');
