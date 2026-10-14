@@ -172,10 +172,14 @@ export function useLegalLibrary() {
  * so it has to be asked for at the moment the reader wants it.
  */
 export async function signedPdfUrl(version: LegalVersion) {
-  if (!version.pdfUrl) throw new Error('no pdf');
+  // A path on the API, never another origin.
+  if (!version.pdfUrl || !/^\/(?![/\\])/.test(version.pdfUrl)) throw new Error('no pdf');
   const response = await fetch(`${apiBaseUrl}${version.pdfUrl}`, { cache: 'no-store' });
   if (!response.ok) throw new Error(`legal pdf: HTTP ${response.status}`);
   const body = (await response.json()) as { url?: unknown };
   if (typeof body.url !== 'string') throw new Error('legal pdf: unexpected response');
-  return body.url;
+  // The page navigates to it, so only a web address will do.
+  const url = new URL(body.url);
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('legal pdf: unexpected link');
+  return url.href;
 }
