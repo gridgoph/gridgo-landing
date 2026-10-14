@@ -59,8 +59,8 @@ assert(
   'Walkthrough carousel should honour prefers-reduced-motion.',
 );
 assert(
-  videos.includes('if (playing || reduceMotion) return'),
-  'Carousel auto-advance should pause while a video is playing or reduced motion is requested.',
+  videos.includes('if (playRequested || reduceMotion) return'),
+  'Carousel auto-advance should pause while a video is playing or asking to play, or reduced motion is requested.',
 );
 assert(
   videos.includes('aria-roledescription="carousel"'),
