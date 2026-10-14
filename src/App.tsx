@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
 import { landingLinks } from './utils/landingLinks';
 import { useTheme } from './utils/useTheme';
 import { OpenerStage } from './components/OpenerIntro';
+import { FooterLegalLinks } from './legal/FooterLegalLinks';
+import { openCookieSettings } from './consent/cookieChoice';
 
 /**
  * three.js is most of the landing bundle and the scene is decorative, so it is
@@ -738,6 +740,8 @@ function FooterSection() {
               <Link to="/report" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">REPORT AN ISSUE</Link>
             </div>
           </div>
+
+          <FooterLegalLinks />
         </div>
       </div>
 
@@ -749,6 +753,7 @@ function FooterSection() {
         <div className="flex flex-wrap gap-x-8 gap-y-3 uppercase tracking-widest">
           <Link to="/privacy" className="hover:text-[var(--color-primary)] transition-colors">PRIVACY POLICY</Link>
           <Link to="/delete-account" className="hover:text-[var(--color-primary)] transition-colors">DELETE ACCOUNT</Link>
+          <button type="button" onClick={openCookieSettings} className="uppercase tracking-widest hover:text-[var(--color-primary)] transition-colors">COOKIE SETTINGS</button>
           <span>&copy; 2026 GRIDGO</span>
           <span>ALL RIGHTS RESERVED</span>
         </div>

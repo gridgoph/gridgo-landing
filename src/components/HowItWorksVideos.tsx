@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Play } from 'lucide-react';
+import { saveCookieChoice, useVideosAllowed } from '../consent/cookieChoice';
 
 const HOW_IT_WORKS_VIDEOS = [
   {
@@ -39,16 +40,91 @@ function YoutubeThumb({ id, alt }: { id: string; alt: string }) {
   );
 }
 
+/**
+ * YouTube sets its own tracking cookies as soon as the player loads, so
+ * without the visitor's permission (src/consent/cookieChoice.ts) pressing play
+ * asks first, in place, rather than loading the player.
+ */
+function YoutubeConsentPrompt({
+  video,
+  onAllow,
+  onCancel,
+}: {
+  video: WalkthroughVideo;
+  onAllow: () => void;
+  onCancel: () => void;
+}) {
+  const titleId = useId();
+  const allowRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    allowRef.current?.focus();
+  }, []);
+
+  return (
+    <div
+      role="group"
+      aria-labelledby={titleId}
+      className="absolute inset-0 z-[3] flex flex-col items-center justify-center overflow-y-auto bg-black/85 px-6 py-6 text-center backdrop-blur-sm"
+    >
+      <h3 id={titleId} className="text-xl sm:text-2xl font-bold leading-snug text-white">
+        This video plays from YouTube
+      </h3>
+      <p className="mt-3 max-w-md text-[0.9375rem] leading-relaxed text-white/75">
+        YouTube sets its own cookies when the video loads. Allow YouTube videos to watch it here, or
+        open it on YouTube instead.
+      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+        <button
+          ref={allowRef}
+          type="button"
+          onClick={onAllow}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#FFDE58] px-5 py-2.5 text-sm font-bold text-black transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFDE58]"
+        >
+          <Play size={16} fill="currentColor" aria-hidden />
+          Allow and play
+        </button>
+        <a
+          href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border-2 border-white/80 px-5 py-2.5 text-sm font-bold text-white transition hover:border-[#FFDE58] hover:text-[#FFDE58] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFDE58]"
+        >
+          Watch on YouTube
+          <ExternalLink size={16} aria-hidden />
+          <span className="sr-only">(opens in a new tab)</span>
+        </a>
+      </div>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="mt-4 min-h-11 px-3 text-sm font-semibold text-white/70 underline underline-offset-4 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFDE58] rounded"
+      >
+        Not now
+      </button>
+    </div>
+  );
+}
+
 function WalkthroughCard({
   video,
   dimmed = false,
   playing = false,
+  asking = false,
+  focusPlay = false,
   onPlay,
+  onAllow,
+  onCancel,
 }: {
   video: WalkthroughVideo;
   dimmed?: boolean;
   playing?: boolean;
+  asking?: boolean;
+  /** Put focus back on Play after the YouTube prompt is dismissed. */
+  focusPlay?: boolean;
   onPlay?: () => void;
+  onAllow?: () => void;
+  onCancel?: () => void;
 }) {
   return (
     <div className="relative h-full w-full overflow-hidden rounded-[1.75rem] bg-[#0B0B0B] border border-white/10 shadow-[0_30px_80px_-24px_rgba(0,0,0,0.65)]">
@@ -64,8 +140,9 @@ function WalkthroughCard({
         <>
           <YoutubeThumb id={video.youtubeId} alt={video.label} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent" />
-          {!dimmed && onPlay && (
+          {!dimmed && onPlay && !asking && (
             <button
+              ref={focusPlay ? (button) => button?.focus() : undefined}
               type="button"
               onClick={onPlay}
               aria-label={`Play ${video.label}`}
@@ -87,6 +164,9 @@ function WalkthroughCard({
               {video.description}
             </p>
           </div>
+          {asking && onAllow && onCancel && (
+            <YoutubeConsentPrompt video={video} onAllow={onAllow} onCancel={onCancel} />
+          )}
         </>
       )}
       {dimmed && <div className="absolute inset-0 bg-black/30 pointer-events-none" />}
@@ -120,8 +200,13 @@ function NavDisc({
 export function HowItWorksVideos() {
   const reduceMotion = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const videosAllowed = useVideosAllowed();
+  const [playRequested, setPlayRequested] = useState(false);
   const [direction, setDirection] = useState(1);
+  const [focusPlay, setFocusPlay] = useState(false);
+  // Withdrawing permission in Cookie settings unloads a playing video.
+  const playing = playRequested && videosAllowed;
+  const asking = playRequested && !videosAllowed;
 
   const count = HOW_IT_WORKS_VIDEOS.length;
   const active = HOW_IT_WORKS_VIDEOS[activeIndex];
@@ -129,19 +214,20 @@ export function HowItWorksVideos() {
   const go = useCallback(
     (delta: number) => {
       setDirection(delta >= 0 ? 1 : -1);
-      setPlaying(false);
+      setPlayRequested(false);
+      setFocusPlay(false);
       setActiveIndex((current) => (current + delta + count) % count);
     },
     [count],
   );
 
   useEffect(() => {
-    if (playing || reduceMotion) return;
+    if (playRequested || reduceMotion) return;
     const timer = setInterval(() => {
       go(1);
     }, 5000);
     return () => clearInterval(timer);
-  }, [go, playing, reduceMotion]);
+  }, [go, playRequested, reduceMotion]);
 
   return (
     <div id="how-it-works-videos" className="mt-32 relative max-w-5xl mx-auto px-6 overflow-hidden">
@@ -167,7 +253,7 @@ export function HowItWorksVideos() {
             initial={reduceMotion ? { opacity: 0.4 } : { opacity: 0.4, x: direction > 0 ? 36 : -36 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: 'spring', stiffness: 240, damping: 28 }}
-            drag={playing ? false : 'x'}
+            drag={playRequested ? false : 'x'}
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.16}
             onDragEnd={(_, info) => {
@@ -178,7 +264,17 @@ export function HowItWorksVideos() {
             <WalkthroughCard
               video={active}
               playing={playing}
-              onPlay={() => setPlaying(true)}
+              asking={asking}
+              focusPlay={focusPlay}
+              onPlay={() => {
+                setFocusPlay(false);
+                setPlayRequested(true);
+              }}
+              onAllow={() => saveCookieChoice(true)}
+              onCancel={() => {
+                setFocusPlay(true);
+                setPlayRequested(false);
+              }}
             />
           </motion.div>
         </div>
@@ -196,7 +292,8 @@ export function HowItWorksVideos() {
                 onClick={() => {
                   if (idx === activeIndex) return;
                   setDirection(idx > activeIndex ? 1 : -1);
-                  setPlaying(false);
+                  setPlayRequested(false);
+                  setFocusPlay(false);
                   setActiveIndex(idx);
                 }}
                 className={`h-2.5 rounded-full transition-all duration-300 ${

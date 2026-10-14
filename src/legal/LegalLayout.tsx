@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../utils/useTheme';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
+import { openCookieSettings } from '../consent/cookieChoice';
 import { EFFECTIVE_DATE, LAST_UPDATED, PRIVACY_CONTACT } from './legalPages';
 
 export type LegalSection = {
@@ -21,6 +22,59 @@ type LegalLayoutProps = {
   sections: LegalSection[];
 };
 
+/** Back to the site, and the theme toggle. Shared with the /legal pages. */
+export function LegalTopBar() {
+  const { toggleDarkMode } = useTheme();
+  return (
+    <div className="flex items-center justify-between">
+      <Link
+        to="/"
+        className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-[var(--color-primary)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)] rounded"
+      >
+        <ArrowLeft size={16} aria-hidden />
+        GRIDGO
+      </Link>
+      <button
+        type="button"
+        onClick={toggleDarkMode}
+        aria-label="Switch between light and dark mode"
+        className="p-2 rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+      >
+        <Sun size={18} aria-hidden className="hidden dark:block" />
+        <Moon size={18} aria-hidden className="block dark:hidden" />
+      </button>
+    </div>
+  );
+}
+
+/** The footer of every legal page. Static markup: it is prerendered too. */
+export function LegalFooter() {
+  return (
+    <footer className="border-t border-black/10 dark:border-white/10">
+      <div className="mx-auto w-full max-w-[1100px] px-4 sm:px-6 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 text-[12px] font-mono tracking-wide text-gray-500 dark:text-[#888]">
+        <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-3 uppercase tracking-[0.15em]">
+          <Link to="/legal" className="hover:text-[var(--color-primary)]">Legal documents</Link>
+          <Link to="/privacy" className="hover:text-[var(--color-primary)]">Privacy Policy</Link>
+          <Link to="/delete-account" className="hover:text-[var(--color-primary)]">Delete account</Link>
+          <button type="button" onClick={openCookieSettings} className="uppercase tracking-[0.15em] hover:text-[var(--color-primary)]">
+            Cookie settings
+          </button>
+          <Link to="/support" className="hover:text-[var(--color-primary)]">Support</Link>
+          <Link to="/report" className="hover:text-[var(--color-primary)]">Report an issue</Link>
+        </nav>
+        <p>
+          Privacy questions:{' '}
+          <a href={`mailto:${PRIVACY_CONTACT}`} className="text-black dark:text-white underline underline-offset-4 hover:text-[var(--color-primary)]">
+            {PRIVACY_CONTACT}
+          </a>
+          <span className="mx-3" aria-hidden>·</span>
+          &copy; 2026 GRIDGO
+        </p>
+      </div>
+    </footer>
+  );
+}
+
 /**
  * Long-form layout shared by /privacy and /delete-account.
  *
@@ -31,37 +85,12 @@ type LegalLayoutProps = {
  * no markup branches on the theme hook's dark flag.
  */
 export function LegalLayout({ documentTitle, kicker, title, intro, sections }: LegalLayoutProps) {
-  const { toggleDarkMode } = useTheme();
-
-  useEffect(() => {
-    const previous = document.title;
-    document.title = documentTitle;
-    return () => {
-      document.title = previous;
-    };
-  }, [documentTitle]);
+  useDocumentTitle(documentTitle);
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white overflow-x-hidden">
       <div className="mx-auto w-full max-w-[1100px] px-4 sm:px-6 pt-8 pb-16">
-        <div className="flex items-center justify-between">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-[var(--color-primary)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)] rounded"
-          >
-            <ArrowLeft size={16} aria-hidden />
-            GRIDGO
-          </Link>
-          <button
-            type="button"
-            onClick={toggleDarkMode}
-            aria-label="Switch between light and dark mode"
-            className="p-2 rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
-          >
-            <Sun size={18} aria-hidden className="hidden dark:block" />
-            <Moon size={18} aria-hidden className="block dark:hidden" />
-          </button>
-        </div>
+        <LegalTopBar />
 
         <header className="mt-12 mb-12 max-w-3xl">
           <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary)] mb-5 font-bold">
@@ -140,24 +169,7 @@ export function LegalLayout({ documentTitle, kicker, title, intro, sections }: L
         </div>
       </div>
 
-      <footer className="border-t border-black/10 dark:border-white/10">
-        <div className="mx-auto w-full max-w-[1100px] px-4 sm:px-6 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 text-[12px] font-mono tracking-wide text-gray-500 dark:text-[#888]">
-          <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-3 uppercase tracking-[0.15em]">
-            <Link to="/privacy" className="hover:text-[var(--color-primary)]">Privacy Policy</Link>
-            <Link to="/delete-account" className="hover:text-[var(--color-primary)]">Delete account</Link>
-            <Link to="/support" className="hover:text-[var(--color-primary)]">Support</Link>
-            <Link to="/report" className="hover:text-[var(--color-primary)]">Report an issue</Link>
-          </nav>
-          <p>
-            Privacy questions:{' '}
-            <a href={`mailto:${PRIVACY_CONTACT}`} className="text-black dark:text-white underline underline-offset-4 hover:text-[var(--color-primary)]">
-              {PRIVACY_CONTACT}
-            </a>
-            <span className="mx-3" aria-hidden>·</span>
-            &copy; 2026 GRIDGO
-          </p>
-        </div>
-      </footer>
+      <LegalFooter />
     </div>
   );
 }
