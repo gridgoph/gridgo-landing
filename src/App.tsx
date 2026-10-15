@@ -91,10 +91,11 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
         </a>
 
         {/* Center Nav */}
-        <div className={`hidden md:flex rounded-full px-6 py-2.5 items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2 border transition duration-500 ${isScrolled ? 'bg-white dark:bg-black/60 backdrop-blur-md border-black/10 dark:border-white/10' : 'bg-transparent border-transparent backdrop-blur-none'}`}>
+        <div className={`hidden xl:flex whitespace-nowrap rounded-full px-6 py-2.5 items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2 border transition duration-500 ${isScrolled ? 'bg-white dark:bg-black/60 backdrop-blur-md border-black/10 dark:border-white/10' : 'bg-transparent border-transparent backdrop-blur-none'}`}>
           {NAV_LINKS.map((link) => (
             <a key={link.id} href={link.href} aria-current={active === link.id ? 'true' : undefined} className={linkClass(link.id)}>{link.label}</a>
           ))}
+          <Link to="/tutorials" className="transition-colors hover:text-[var(--color-primary)]">Tutorials</Link>
         </div>
 
         {/* Right Nav */}
@@ -112,7 +113,9 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
           </button>
           {/* Mobile Hamburger Button */}
           <button
-            className={`md:hidden p-2 rounded-full relative border transition duration-500 ${isScrolled ? 'bg-white dark:bg-black/60 backdrop-blur-md border-black/10 dark:border-white/10' : 'bg-transparent border-transparent backdrop-blur-none'}`}
+            aria-label={isOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isOpen}
+            className={`xl:hidden p-2 rounded-full relative border transition duration-500 ${isScrolled ? 'bg-white dark:bg-black/60 backdrop-blur-md border-black/10 dark:border-white/10' : 'bg-transparent border-transparent backdrop-blur-none'}`}
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -127,11 +130,12 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
             initial={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-            className="fixed inset-0 z-50 bg-white dark:bg-black/90 backdrop-blur-lg flex flex-col items-center justify-center gap-8 md:hidden"
+            className="fixed inset-0 z-50 bg-white dark:bg-black/90 backdrop-blur-lg flex flex-col items-center justify-center gap-8 xl:hidden"
           >
             {NAV_LINKS.map((link) => (
               <a key={link.id} href={link.href} onClick={() => setIsOpen(false)} aria-current={active === link.id ? 'true' : undefined} className={`text-2xl font-bold transition-colors ${linkClass(link.id)}`}>{link.label}</a>
             ))}
+            <Link to="/tutorials" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Tutorials</Link>
             <Link to="/download" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Download</Link>
             {/* <div className="flex gap-4 mt-8">
               <button className="px-8 py-3 bg-white dark:bg-black/60 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-full transition-colors font-bold" onClick={() => setIsOpen(false)}>Log In</button>
@@ -727,6 +731,7 @@ function FooterSection() {
               <a href="#ecosystem" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">ECOSYSTEM</a>
               <a href="#support" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">SUPPORT</a>
               <a href="#process" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">HOW IT WORKS</a>
+              <Link to="/tutorials" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">TUTORIALS</Link>
               <a href="#features" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">FEATURES</a>
               <Link to="/download" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">DOWNLOAD APP</Link>
               <a href={dashboardUrl} target="_blank" rel="noopener noreferrer" className="text-white text-[12px] font-bold tracking-widest uppercase hover:text-[var(--color-primary)] transition-colors">PARTNER DASHBOARD</a>
