@@ -1,15 +1,22 @@
 import { Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
   LandingRoute,
   SupportRoute,
   DownloadRoute,
+  TutorialsRoute,
   DeskRoute,
   ReportRoute,
   PrivacyRoute,
   DeleteAccountRoute,
 } from './routes'
 import { ScrollBehaviour } from './utils/ScrollBehaviour'
+
+/** /walkthroughs is the other name people use for /tutorials; keep any #group. */
+function WalkthroughsRedirect() {
+  const { search, hash } = useLocation()
+  return <Navigate to={{ pathname: '/tutorials', search, hash }} replace />
+}
 
 /**
  * The route table, without a router. The browser wraps it in BrowserRouter
@@ -26,6 +33,8 @@ export function AppRoutes() {
           <Route path="/" element={<LandingRoute />} />
           <Route path="/support" element={<SupportRoute />} />
           <Route path="/download" element={<DownloadRoute />} />
+          <Route path="/tutorials" element={<TutorialsRoute />} />
+          <Route path="/walkthroughs" element={<WalkthroughsRedirect />} />
           <Route path="/desk" element={<DeskRoute />} />
           <Route path="/report" element={<ReportRoute />} />
           <Route path="/privacy" element={<PrivacyRoute />} />

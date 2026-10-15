@@ -35,10 +35,11 @@ FROM nginxinc/nginx-unprivileged:1.27-alpine AS runtime
 
 USER root
 RUN rm -f /etc/nginx/conf.d/default.conf \
- # Present but empty when the host downloads directory is not mounted, so
- # nginx starts and the /download page shows its honest "not available" state.
- && mkdir -p /srv/gridgo-downloads \
- && chown -R 101:101 /srv/gridgo-downloads
+ # Present but empty when the host downloads and media directories are not
+ # mounted, so nginx starts, /download shows its honest "not available" state
+ # and /tutorials says each video is not up yet.
+ && mkdir -p /srv/gridgo-downloads /srv/gridgo-media \
+ && chown -R 101:101 /srv/gridgo-downloads /srv/gridgo-media
 COPY deploy/nginx.conf /etc/nginx/conf.d/gridgo-landing.conf
 COPY --from=build --chown=101:101 /app/dist /usr/share/nginx/html
 # Validate the config at build time so a broken conf fails here rather than on
