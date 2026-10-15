@@ -14,8 +14,8 @@ and `@react-three/fiber` + `drei` + `three` for the fixed 3D layer. Routing is
 check scripts under `scripts/`.
 
 Routes are in `src/AppRoutes.tsx` (chunks in `src/routes.tsx`): `/` (landing),
-`/support`, `/download`, `/desk` (ticketing desk), `/report`, `/privacy` and
-`/delete-account`. Tickets live in GRIDGO Postgres via **gridgo-api**.
+`/support`, `/download`, `/tutorials` (`/walkthroughs` redirects there), `/desk`
+(ticketing desk), `/report`, `/privacy` and `/delete-account`. Tickets live in GRIDGO Postgres via **gridgo-api**.
 Do not add a sidecar Express/Supabase process — production landing is static
 nginx, and CI deploy only runs the word `landing`.
 

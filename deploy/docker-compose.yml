@@ -22,6 +22,9 @@ services:
       # Relative to this compose file at ~/gridgo/landing/, so it resolves to
       # ~/gridgo/downloads whoever the deploy user is.
       - ../downloads:/srv/gridgo-downloads:ro
+      # The /tutorials videos and their poster frames, copied up by hand
+      # under versioned names. Read-only, like the downloads.
+      - ../media:/srv/gridgo-media:ro
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/healthz"]
       interval: 30s
