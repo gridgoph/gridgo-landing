@@ -143,7 +143,12 @@ jobs:
         run: |
           set -euo pipefail
           image='${{ steps.meta.outputs.image }}:${{ github.sha }}'
-          docker run -d --name smoke -p 39300:3000 "$image"
+          # A stand-in for ~/gridgo/media, so the /media/ location is tested
+          # with a real file and not only with 404s.
+          mkdir -p ./_media
+          head -c 4096 /dev/urandom > ./_media/smoke-v1.mp4
+          chmod -R a+rX ./_media
+          docker run -d --name smoke -p 39300:3000 -v "$PWD/_media:/srv/gridgo-media:ro" "$image"
           for i in $(seq 1 30); do
             if curl -fsS -m 2 http://127.0.0.1:39300/healthz >/dev/null; then break; fi
             sleep 1
@@ -154,7 +159,7 @@ jobs:
 
           # Every route must resolve through the SPA fallback, including a deep
           # link that only react-router knows about.
-          for route in / /support /download /download?x=1 /desk /privacy /delete-account; do
+          for route in / /support /download /download?x=1 /tutorials /walkthroughs /desk /privacy /delete-account; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:39300${route}")
             test "$code" = "200" || { echo "::error::route ${route} returned ${code}"; exit 1; }
           done
@@ -170,6 +175,22 @@ jobs:
           # serving index.html.
           code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:39300/assets/nope.js)
           test "$code" = "404" || { echo "::error::missing asset returned ${code}, expected 404"; exit 1; }
+
+          # Tutorial videos: served as video/mp4 with byte ranges and a long
+          # cache, and a missing one is a plain 404 that nothing pins.
+          headers=$(curl -fsS -D - -o /dev/null -r 0-99 http://127.0.0.1:39300/media/smoke-v1.mp4)
+          printf '%s' "$headers" | grep -q '^HTTP/1.1 206' \
+            || { echo "::error::/media/ did not answer a range request with 206"; exit 1; }
+          printf '%s' "$headers" | grep -qi '^content-type: video/mp4' \
+            || { echo "::error::/media/*.mp4 is not served as video/mp4"; exit 1; }
+          printf '%s' "$headers" | grep -qi '^cache-control: public, max-age=31536000, immutable' \
+            || { echo "::error::/media/ is missing its immutable cache header"; exit 1; }
+          headers=$(curl -s -D - -o /dev/null http://127.0.0.1:39300/media/nope-v1.mp4)
+          printf '%s' "$headers" | grep -q '^HTTP/1.1 404' \
+            || { echo "::error::a missing /media/ file did not 404"; exit 1; }
+          if printf '%s' "$headers" | grep -qi '^cache-control:.*immutable'; then
+            echo "::error::a missing /media/ file was marked immutable"; exit 1
+          fi
 
           # No HTTPS redirect: Cloudflare Flexible mode in front would loop forever.
           code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:39300/)
