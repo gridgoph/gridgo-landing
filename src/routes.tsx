@@ -15,6 +15,10 @@ export const DownloadRoute = lazy(() =>
   import('./DownloadPage').then((m) => ({ default: m.DownloadPage })),
 )
 
+export const TutorialsRoute = lazy(() =>
+  import('./TutorialsPage').then((m) => ({ default: m.TutorialsPage })),
+)
+
 export const DeskRoute = lazy(() =>
   import('./desk/DeskPage').then((m) => ({ default: m.DeskPage })),
 )
