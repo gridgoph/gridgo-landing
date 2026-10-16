@@ -34,3 +34,11 @@ export const PrivacyRoute = lazy(() =>
 export const DeleteAccountRoute = lazy(() =>
   import('./legal/DeleteAccountPage').then((m) => ({ default: m.DeleteAccountPage })),
 )
+
+export const LegalLibraryRoute = lazy(() =>
+  import('./legal/LegalLibraryPages').then((m) => ({ default: m.LegalLibraryPage })),
+)
+
+export const LegalDocumentRoute = lazy(() =>
+  import('./legal/LegalLibraryPages').then((m) => ({ default: m.LegalDocumentPage })),
+)

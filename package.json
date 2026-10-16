@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/prerender-legal.mjs",
     "lint": "eslint .",
-    "test": "npm run test:community-cta && npm run test:video && npm run test:support-copy && npm run test:download && npm run test:claims && npm run test:desk && npm run test:report && npm run test:opener && npm run test:legal && npm run test:deletion && npm run test:tutorials",
+    "test": "npm run test:community-cta && npm run test:video && npm run test:support-copy && npm run test:download && npm run test:claims && npm run test:desk && npm run test:report && npm run test:opener && npm run test:legal && npm run test:deletion && npm run test:legal-library && npm run test:tutorials",
     "test:community-cta": "node scripts/check-community-cta.mjs",
     "test:video": "node scripts/check-video-section.mjs",
     "test:support-copy": "node scripts/check-support-section.mjs",
@@ -19,6 +19,7 @@
     "test:report": "node scripts/check-report-page.mjs",
     "test:legal": "node scripts/check-legal-pages.mjs",
     "test:deletion": "node scripts/check-deletion-request.mjs",
+    "test:legal-library": "node scripts/check-legal-library.mjs",
     "test:tutorials": "node scripts/check-tutorials.mjs"
   },
   "dependencies": {

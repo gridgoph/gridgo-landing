@@ -9,8 +9,11 @@ import {
   ReportRoute,
   PrivacyRoute,
   DeleteAccountRoute,
+  LegalLibraryRoute,
+  LegalDocumentRoute,
 } from './routes'
 import { ScrollBehaviour } from './utils/ScrollBehaviour'
+import { CookieConsent } from './consent/CookieConsent'
 
 /** /walkthroughs is the other name people use for /tutorials; keep any #group. */
 function WalkthroughsRedirect() {
@@ -39,8 +42,11 @@ export function AppRoutes() {
           <Route path="/report" element={<ReportRoute />} />
           <Route path="/privacy" element={<PrivacyRoute />} />
           <Route path="/delete-account" element={<DeleteAccountRoute />} />
+          <Route path="/legal" element={<LegalLibraryRoute />} />
+          <Route path="/legal/:documentId" element={<LegalDocumentRoute />} />
         </Routes>
       </Suspense>
+      <CookieConsent />
     </>
   )
 }
