@@ -45,6 +45,14 @@ export const TUTORIAL_GROUPS: TutorialGroup[] = [
         summary:
           'Create your account, start a print request, pick a printer, upload your artwork, pay by QR, confirm your delivery pin, follow the rider and receive your order with your handover code.',
       },
+      {
+        file: 'gridgo-customer-organization-tutorial-v1',
+        title: 'How to register your organization',
+        app: 'Customer app',
+        length: '4:40',
+        summary:
+          "Register your organization from Account, add its name and school, the officer's ID details and documents, verify your email code and send, wait for the GRIDGO Team's approval, then order as your organization and change its officer.",
+      },
     ],
   },
   {

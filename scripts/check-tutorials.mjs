@@ -49,7 +49,7 @@ for (const id of ['customer', 'shop', 'rider']) {
   assert(data.includes(`id: '${id}'`), `The ${id} group should be on /tutorials.`);
 }
 const files = [...data.matchAll(/file: '([^']+)'/g)].map((m) => m[1]);
-assert.equal(files.length, 4, 'All four tutorial videos should be listed.');
+assert.equal(files.length, 5, 'All five tutorial videos should be listed.');
 for (const file of files) {
   assert(
     /-v\d+$/.test(file),
