@@ -29,7 +29,7 @@ function Facts({ children }: { children: ReactNode }) {
 /** [what, how long] — the retention schedule, mirrored on /delete-account. */
 const RETENTION: [string, string][] = [
   ['Your account and profile', 'While your account is open. Deleted within 30 days of a confirmed deletion request.'],
-  ['Artwork and design files, and mockups', '30 days after the order is completed. You can delete them sooner yourself once the order is completed and nothing about it is still open.'],
+  ['Artwork and design files, and mockups', '30 days after the order is completed. Files you choose to keep with ‘Save to My files’ stay in My files until you delete them or close your account. You can delete any of them sooner yourself once the order is completed and nothing about it is still open.'],
   ['Order, payment, payout and refund records, including payment proof screenshots, reference numbers, receipts, refund and payout QR codes, and shop invoices', '5 years after the order closes'],
   ['Production photos, delivery photos and handover signatures', '1 year after the order closes'],
   ['The location points recorded while a rider delivers your order', '1 year after the order closes'],

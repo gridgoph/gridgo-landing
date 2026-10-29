@@ -16,7 +16,7 @@ export const PRIVACY_CONTACT = 'gridgo26@gmail.com'
 
 /** Shown on both pages. Change both dates together when the text changes. */
 export const EFFECTIVE_DATE = '7 October 2026'
-export const LAST_UPDATED = '7 October 2026'
+export const LAST_UPDATED = '29 October 2026'
 
 export const LEGAL_PAGES: LegalPage[] = [
   {
