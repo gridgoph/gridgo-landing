@@ -149,7 +149,8 @@ const sections: LegalSection[] = [
           <li>
             <strong>Artwork:</strong> once an order is completed and nothing about it is still open, you can
             delete its artwork yourself in the GRIDGO app. Otherwise we delete artwork 30 days after the order
-            is completed.
+            is completed. Files you choose to keep with ‘Save to My files’ stay in My files until you delete them
+            or close your account.
           </li>
           <li>
             <strong>Anything else:</strong> email {mail} or message support in the app, say what you want
