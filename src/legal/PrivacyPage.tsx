@@ -36,6 +36,8 @@ const RETENTION: [string, string][] = [
   ['ID and verification documents, and the details in a shop, rider, business or organization application', 'While the account is open, then 1 year after it is closed or the application is turned down'],
   ['Files uploaded but never attached to anything', '24 hours'],
   ['Support chat messages, support tickets and problem reports', '1 year after the conversation or report is closed'],
+  ['Order chat between a customer or print shop and the rider, with its photos, and the record of in-app calls about the delivery', 'Deleted about one day after the delivery is recorded'],
+  ['Order chat between a customer and the print shop, with its attachments', 'Kept with the order’s records, to settle questions about what was agreed'],
   ['Security and audit records of actions taken on an account', '1 year after the account is closed'],
   ['Notification tokens', 'Until you sign out or delete your account, or until the push service tells us the app was removed'],
   ['Server logs', 'A short rolling window. They are size-limited and overwritten automatically.'],
@@ -74,10 +76,11 @@ const sections: LegalSection[] = [
     body: (
       <ul>
         <li>We collect what we need to take an order, get it printed, deliver it and get everyone paid.</li>
-        <li><strong>We do not sell your personal data</strong>, and we do not use it for advertising. Our apps have no ads, no advertising ID, and no analytics or tracking tools.</li>
+        <li><strong>We do not sell your personal data</strong>, and we do not use it for advertising or cross-company tracking. Our apps show no ads and do not use an advertising ID. The apps we reviewed contain no automatic analytics or crash-reporting tool; if you send a problem report, we receive the device and app information described below.</li>
         <li>We never take card numbers. You pay by transfer from your own e-wallet or bank.</li>
-        <li>The GRIDGO and GRIDGO Rider apps use your location only while the app is open on your screen. None of our apps collects location in the background.</li>
-        <li>Each kind of data has a set time we keep it, listed in <a href="#retention">How long we keep it</a>.</li>
+        <li>The GRIDGO app uses your phone’s location only while it is open, to place your delivery pin. The GRIDGO Rider app shares the rider’s location during a delivery job they accepted, including while they switch to another app, and stops when the job ends. No other app collects location in the background.</li>
+        <li>The apps use the microphone only for voice calls you make or answer inside the app. The apps have no call-recording feature.</li>
+        <li>How long we keep each kind of data, and why, is listed in <a href="#retention">How long we keep it</a>.</li>
         <li>You can ask us to delete your account at any time. See <Link to="/delete-account">Delete your GRIDGO account</Link>.</li>
       </ul>
     ),
@@ -89,11 +92,12 @@ const sections: LegalSection[] = [
       <>
         <h3>Your account</h3>
         <p>
-          You sign in with an email address and password, a one-time code sent to your email, or your Google
-          account. Sign-in is handled by our authentication provider (see{' '}
+          You sign in with an email address and password, a one-time code sent to your email, your Google
+          account or, on iPhone, your Apple account. Sign-in is handled by our authentication provider (see{' '}
           <a href="#sharing">Who we share it with</a>). We keep your <strong>name, email address, mobile number</strong>,
           the role you use GRIDGO in (customer, print shop, rider or staff) and your account type (personal,
-          business or organization). If you add a <strong>profile photo</strong>, it is stored by the
+          business or organization). We also keep your <strong>Clerk and GRIDGO account identifiers</strong>, which
+          connect your account to your orders, messages and other records. If you add a <strong>profile photo</strong>, it is stored by the
           authentication provider with your sign-in account. If you turn on two-step sign-in, your phone number
           may be used to send you a code.
         </p>
@@ -159,17 +163,20 @@ const sections: LegalSection[] = [
           </Fact>
           <Fact label="Riders (GRIDGO Rider app)">
             <p>
-              While you are carrying an order you accepted, and <strong>only while the app is open on your screen</strong>,
-              the app shares your location (coordinates, accuracy and time) with GRIDGO about every 15 seconds.
-              A “Location sharing on” banner shows while it does. It stops when the delivery ends or the app
-              leaves the screen, and it is never collected in the background. The map tab also uses your
-              location to centre the map; that is not sent to GRIDGO.
+              While you are carrying a delivery job you accepted, the app shares your <strong>precise location</strong>{' '}
+              (coordinates, accuracy and time) with GRIDGO, and through GRIDGO with the people on that job: the
+              print shop until pickup, then the customer until delivery. Sharing <strong>continues while you switch
+              to another app during the job</strong>, so your phone asks for permission to use location in the
+              background. While it does, your phone shows that the app is using your location (for example the
+              blue location indicator on iPhone). Sharing stops when the job ends, and the app does not collect
+              your location when you have no job. The map tab also uses your location to centre the map; that is
+              not sent to GRIDGO.
             </p>
           </Fact>
           <Fact label="Print shops (GRIDGO Supplier app)">
             <p>
-              The shop’s location, which you place by hand on a map. The Supplier app does not read your
-              phone’s location.
+              The shop’s <strong>precise location</strong>, which you place by hand on a map and which we keep
+              with your shop. The Supplier app does not read your phone’s location.
             </p>
           </Fact>
         </Facts>
@@ -179,8 +186,9 @@ const sections: LegalSection[] = [
         <ul>
           <li><strong>Customers:</strong> artwork, the screenshot of your payment, and for a refund your receiving QR code and photos of the problem; documents for a business or organization account.</li>
           <li><strong>Print shops:</strong> verification documents, shop and product photos, photos of production progress and of the finished order, and your payout QR code.</li>
-          <li><strong>Riders:</strong> pickup and delivery photos, taken with the camera. At pickup, the shop signs on the rider’s screen and types their name, and that signature is saved with the order.</li>
+          <li><strong>Riders:</strong> a profile photo, documents for your application, and pickup and delivery photos, taken with the camera. At pickup, the shop signs on the rider’s screen and types their name, and that signature is saved with the order.</li>
           <li><strong>Hub staff (GRIDGO Admin):</strong> the camera scans a customer’s pickup QR code; no photo is kept.</li>
+          <li><strong>Order chat:</strong> photos or files you attach to a message (see below).</li>
           <li><strong>Website:</strong> screenshots you attach to a problem report.</li>
         </ul>
         <p>
@@ -195,21 +203,25 @@ const sections: LegalSection[] = [
           transfer and its reference number</strong>; our operations team checks it by hand. For a refund we
           keep the e-wallet or bank you choose, the <strong>account holder’s name and your receiving QR code</strong>.
           For print shop payouts we keep the <strong>payout method, account name, account or wallet number, bank or
-          wallet name and QR code</strong>. We keep the reference numbers and receipts of the transfers we send.
+          wallet name and QR code</strong>. For print shops and riders, we also keep <strong>earnings and payout
+          records</strong>. We keep the reference numbers and receipts of the transfers we send.
         </p>
 
-        <h3>Messages, support and problem reports</h3>
+        <h3>Messages, calls, support and problem reports</h3>
         <ul>
-          <li><strong>Support chat</strong> in the apps is between you and GRIDGO operations only. We keep the messages and whether they have been read. There is no chat between customers, shops and riders.</li>
-          <li><strong>“Report a problem”</strong> in the GRIDGO and Supplier apps sends your description to support chat, together with the app version, your phone’s make and model and its Android version, so we can find the fault.</li>
+          <li><strong>Support chat</strong> in the apps is between you and GRIDGO operations. We keep the messages and whether they have been read.</li>
+          <li><strong>Order chat</strong> lets the people on an order message each other inside the apps: the customer and the print shop about the order, and the rider with the print shop about the pickup or with the customer about the delivery. We keep the messages, any photos or files attached to them, and whether they have been read. The apps do not show the other person your phone number or email address. GRIDGO operations staff can read order chat between a customer and a print shop, for example to help settle a question about the order.</li>
+          <li><strong>In-app voice calls</strong> let a rider and the customer or print shop on the same job talk without sharing phone numbers. Calls are audio only and use your phone’s <strong>microphone</strong>, only during a call you start or answer. The sound travels between the two phones, sometimes through a relay server; the apps have no call-recording feature, and GRIDGO’s own systems do not store call audio. We keep a record of each call (who called whom, for which order, when, and whether it was answered) for as long as the job’s chat can still be read.</li>
+          <li><strong>“Report a problem”</strong> in the GRIDGO and Supplier apps sends your description to support chat, together with the app version, your phone’s make and model and its operating system version (Android or iOS), and any screenshots you attach, so we can find the fault.</li>
           <li>The <strong>support form</strong> on this website takes your name, email address, subject and message. We answer by email.</li>
           <li>The <strong>problem report form</strong> on this website takes your description, a category and up to six screenshots. It does not ask who you are. Our team publishes a short summary of each report on GRIDGO’s public reports page, so please leave personal details out of the text and screenshots.</li>
         </ul>
 
         <h3>Notifications</h3>
         <p>
-          If you allow notifications, your phone gives the app a <strong>push token</strong>, which we store with
-          the platform and which app it belongs to. The message that travels through the push service carries
+          If you allow notifications, your phone gives the app a <strong>push token</strong>, an identifier for
+          that app on that device, which we store with the platform and which app it belongs to. The app may
+          register it before you sign in, and links it to your account once you do. The message that travels through the push service carries
           only an order reference and the kind of update; the details are fetched from GRIDGO when you open it.
         </p>
 
@@ -224,10 +236,10 @@ const sections: LegalSection[] = [
 
         <h3>What we do not collect</h3>
         <p>
-          We do not collect your contacts, call logs, text messages, browsing history, card details, advertising
-          ID or background location, and we do not record audio. Android may show a microphone permission for
-          some GRIDGO builds because it comes with the sound library we use for alert tones; the apps never
-          turn the microphone on.
+          We do not collect your contacts, your phone’s call log or SMS messages, browsing history, card details
+          or advertising ID, and the apps have no audio-recording feature. Apart from the GRIDGO Rider app during a delivery job,
+          our apps do not collect location in the background. The microphone is used only during an in-app
+          voice call, as described above.
         </p>
       </>
     ),
@@ -279,10 +291,13 @@ const sections: LegalSection[] = [
         </p>
         <Facts>
           <Fact label="Authentication provider: Clerk">
-            <p>Your name, email address, password (which only Clerk holds), phone number if you add one, profile photo and sign-in sessions. If you sign in with Google, Google confirms your identity to Clerk.</p>
+            <p>Your name, email address, password (which only Clerk holds), phone number if you add one, profile photo and sign-in sessions. If you sign in with Google or Apple, Google or Apple confirms your identity to Clerk.</p>
           </Fact>
-          <Fact label="Push notification service: Google Firebase Cloud Messaging">
+          <Fact label="Push notification services: Google Firebase Cloud Messaging and Apple Push Notification service">
             <p>Your push token and the short notification described above.</p>
+          </Fact>
+          <Fact label="Voice calls">
+            <p>To connect an in-app call, the two phones exchange network addresses, using Google’s public STUN service and, when a direct connection is not possible, a relay server. They do not receive your name or account.</p>
           </Fact>
           <Fact label="Email: Google (Gmail)">
             <p>Your email address and the message, when we answer a support ticket or send an organization’s confirmation code.</p>
@@ -319,7 +334,7 @@ const sections: LegalSection[] = [
         </p>
         <h3>Data stored outside the Philippines</h3>
         <p>
-          Some of these providers, such as Clerk, Google, Cloudflare and GitHub, process data in other countries.
+          Some of these providers, such as Clerk, Google, Apple, Cloudflare and GitHub, process data in other countries.
           We remain responsible for your data when they do, as the Data Privacy Act requires.
         </p>
       </>
