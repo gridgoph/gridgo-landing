@@ -446,9 +446,8 @@ const sections: LegalSection[] = [
     title: 'Children',
     body: (
       <p>
-        GRIDGO is for people <strong>18 years old and over</strong>, and is not meant for children. We do not
-        knowingly collect personal data from anyone under 18. If you believe a child has given us personal data,
-        write to {mail} and we will delete it.
+        GRIDGO is <strong>not directed at children</strong>, and we do not knowingly collect personal data from
+        children. If you believe a child has given us personal data, write to {mail} and we will delete it.
       </p>
     ),
   },

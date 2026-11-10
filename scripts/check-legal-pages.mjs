@@ -65,13 +65,14 @@ for (const [needle, why] of [
   ['id: \'retention\'', 'have a retention section'],
   ['id: \'sharing\'', 'name the parties data is shared with'],
   ['id: \'security\'', 'describe secure handling'],
-  ['18 years old', 'say GRIDGO is not for children'],
+  ['not directed at children', 'say GRIDGO is not for children'],
   ['to="/delete-account"', 'link to the deletion page'],
   ['Davao City', 'say where GRIDGO is based'],
   ['background', 'say whether location is collected in the background'],
 ]) {
   assert(privacy.includes(needle), `The privacy policy should ${why}.`);
 }
+assert(!/18 years|18 and over/.test(privacy), 'The policy must not state an 18-and-over audience (the client is rated 9+).');
 for (const right of ['to be informed', 'to access', 'to object', 'to erasure or blocking', 'to rectification', 'to data portability', 'to damages', 'to file a complaint']) {
   assert(privacy.includes(right), `The policy should list the right ${right}.`);
 }
