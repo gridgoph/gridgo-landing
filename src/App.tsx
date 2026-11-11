@@ -756,6 +756,7 @@ function FooterSection() {
           A modern platform for digital printing combining precision technology, high-quality output, and seamless logistics.
         </p>
         <div className="flex flex-wrap gap-x-8 gap-y-3 uppercase tracking-widest">
+          <Link to="/terms" className="hover:text-[var(--color-primary)] transition-colors">TERMS OF SERVICE</Link>
           <Link to="/privacy" className="hover:text-[var(--color-primary)] transition-colors">PRIVACY POLICY</Link>
           <Link to="/delete-account" className="hover:text-[var(--color-primary)] transition-colors">DELETE ACCOUNT</Link>
           <button type="button" onClick={openCookieSettings} className="uppercase tracking-widest hover:text-[var(--color-primary)] transition-colors">COOKIE SETTINGS</button>

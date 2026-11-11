@@ -20,6 +20,9 @@ type LegalLayoutProps = {
   title: string;
   intro: ReactNode;
   sections: LegalSection[];
+  /** Defaults to the privacy policy's dates; /terms passes its own. */
+  effectiveDate?: string;
+  lastUpdated?: string;
 };
 
 /** Back to the site, and the theme toggle. Shared with the /legal pages. */
@@ -54,6 +57,7 @@ export function LegalFooter() {
       <div className="mx-auto w-full max-w-[1100px] px-4 sm:px-6 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 text-[12px] font-mono tracking-wide text-gray-500 dark:text-[#888]">
         <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-3 uppercase tracking-[0.15em]">
           <Link to="/legal" className="hover:text-[var(--color-primary)]">Legal documents</Link>
+          <Link to="/terms" className="hover:text-[var(--color-primary)]">Terms of Service</Link>
           <Link to="/privacy" className="hover:text-[var(--color-primary)]">Privacy Policy</Link>
           <Link to="/delete-account" className="hover:text-[var(--color-primary)]">Delete account</Link>
           <button type="button" onClick={openCookieSettings} className="uppercase tracking-[0.15em] hover:text-[var(--color-primary)]">
@@ -76,7 +80,7 @@ export function LegalFooter() {
 }
 
 /**
- * Long-form layout shared by /privacy and /delete-account.
+ * Long-form layout shared by /privacy, /delete-account and /terms.
  *
  * Both pages are prerendered and then hydrated (scripts/prerender-legal.mjs),
  * so nothing here may render differently on the server and in the browser.
@@ -84,7 +88,15 @@ export function LegalFooter() {
  * toggle therefore renders both icons and lets the `dark` class pick one, and
  * no markup branches on the theme hook's dark flag.
  */
-export function LegalLayout({ documentTitle, kicker, title, intro, sections }: LegalLayoutProps) {
+export function LegalLayout({
+  documentTitle,
+  kicker,
+  title,
+  intro,
+  sections,
+  effectiveDate = EFFECTIVE_DATE,
+  lastUpdated = LAST_UPDATED,
+}: LegalLayoutProps) {
   useDocumentTitle(documentTitle);
 
   return (
@@ -103,11 +115,11 @@ export function LegalLayout({ documentTitle, kicker, title, intro, sections }: L
           <dl className="mt-8 flex flex-wrap gap-x-8 gap-y-2 text-[12px] font-mono uppercase tracking-[0.15em] text-gray-500 dark:text-[#888]">
             <div className="flex gap-2">
               <dt>Effective</dt>
-              <dd className="text-black dark:text-white">{EFFECTIVE_DATE}</dd>
+              <dd className="text-black dark:text-white">{effectiveDate}</dd>
             </div>
             <div className="flex gap-2">
               <dt>Last updated</dt>
-              <dd className="text-black dark:text-white">{LAST_UPDATED}</dd>
+              <dd className="text-black dark:text-white">{lastUpdated}</dd>
             </div>
           </dl>
           <div className="legal-prose mt-8">{intro}</div>
