@@ -159,7 +159,7 @@ jobs:
 
           # Every route must resolve through the SPA fallback, including a deep
           # link that only react-router knows about.
-          for route in / /support /download /download?x=1 /tutorials /walkthroughs /desk /privacy /delete-account; do
+          for route in / /support /download /download?x=1 /tutorials /walkthroughs /desk /privacy /delete-account /terms; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:39300${route}")
             test "$code" = "200" || { echo "::error::route ${route} returned ${code}"; exit 1; }
           done
@@ -170,6 +170,8 @@ jobs:
             || { echo "::error::/privacy did not serve the prerendered policy text"; exit 1; }
           curl -fsS http://127.0.0.1:39300/delete-account | grep -q 'Delete your GRIDGO account' \
             || { echo "::error::/delete-account did not serve the prerendered page text"; exit 1; }
+          curl -fsS http://127.0.0.1:39300/terms | grep -q 'the GRIDGO team, Davao City, Philippines' \
+            || { echo "::error::/terms did not serve the prerendered terms text"; exit 1; }
 
           # ...but a missing static asset must still 404 rather than silently
           # serving index.html.

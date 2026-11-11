@@ -1,5 +1,5 @@
 /**
- * Writes /privacy and /delete-account into the build as real HTML.
+ * Writes /privacy, /delete-account and /terms into the build as real HTML.
  *
  * Google Play's reviewers may fetch these URLs without running JavaScript, and
  * an SPA shell is an empty <div id="root">. This renders each legal route with

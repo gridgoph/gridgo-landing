@@ -8,6 +8,7 @@ import {
   DeskRoute,
   ReportRoute,
   PrivacyRoute,
+  TermsRoute,
   DeleteAccountRoute,
   LegalLibraryRoute,
   LegalDocumentRoute,
@@ -41,6 +42,7 @@ export function AppRoutes() {
           <Route path="/desk" element={<DeskRoute />} />
           <Route path="/report" element={<ReportRoute />} />
           <Route path="/privacy" element={<PrivacyRoute />} />
+          <Route path="/terms" element={<TermsRoute />} />
           <Route path="/delete-account" element={<DeleteAccountRoute />} />
           <Route path="/legal" element={<LegalLibraryRoute />} />
           <Route path="/legal/:documentId" element={<LegalDocumentRoute />} />

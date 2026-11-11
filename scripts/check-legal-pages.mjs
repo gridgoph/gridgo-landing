@@ -1,5 +1,6 @@
 /**
- * /privacy and /delete-account are the URLs entered in Google Play Console.
+ * /privacy and /delete-account are the URLs entered in Google Play Console;
+ * /terms is the Terms of Service linked from the App Store listing.
  * Play needs them public, titled, specific to GRIDGO's apps, and readable
  * without JavaScript. The first three are checked here against the source;
  * the last is checked by `npm run build` (scripts/prerender-legal.mjs) and by
@@ -21,6 +22,7 @@ const meta = read('../src/legal/legalPages.ts');
 const layout = read('../src/legal/LegalLayout.tsx');
 const privacy = read('../src/legal/PrivacyPage.tsx');
 const deletion = read('../src/legal/DeleteAccountPage.tsx');
+const terms = read('../src/legal/TermsPage.tsx');
 const nginx = read('../deploy/nginx.conf');
 const pkg = JSON.parse(read('../package.json'));
 
@@ -42,14 +44,20 @@ assert(
   /try_files \$uri \$uri\.html [^;]*\/index\.html;/.test(nginx),
   'nginx should serve dist/<route>.html for a bare /privacy before falling back to the SPA shell.',
 );
-for (const path of ['/privacy', '/delete-account']) {
+assert(routeTable.includes('<Route path="/terms" element={<TermsRoute />} />'), '/terms should be in the route table.');
+assert(/TermsRoute\s*=\s*lazy\([\s\S]*?TermsPage/.test(routes), '/terms should lazy-load the terms page.');
+for (const path of ['/privacy', '/delete-account', '/terms']) {
   assert(meta.includes(`path: '${path}'`), `legalPages.ts should list ${path} for prerendering.`);
 }
 
 // ── Reachable from the site ───────────────────────────────────────────────
 assert(app.includes('to="/privacy"'), 'The site footer should link to /privacy.');
 assert(app.includes('to="/delete-account"'), 'The site footer should link to /delete-account.');
-assert(layout.includes('to="/privacy"') && layout.includes('to="/delete-account"'), 'Each legal page should link to both.');
+assert(app.includes('to="/terms"'), 'The site footer should link to /terms.');
+assert(
+  layout.includes('to="/privacy"') && layout.includes('to="/delete-account"') && layout.includes('to="/terms"'),
+  'Each legal page should link to /privacy, /delete-account and /terms.',
+);
 
 // ── What Google Play requires the policy to say ───────────────────────────
 assert(meta.includes("PRIVACY_CONTACT = 'gridgo26@gmail.com'"), 'The privacy contact should be gridgo26@gmail.com.');
@@ -92,9 +100,34 @@ for (const period of ['5 years after the order closes', '1 year after the order 
   assert(privacy.includes(period) && deletion.includes(period), `Both pages should state "${period}".`);
 }
 
+// ── The Terms of Service, as approved on 11 November 2026 ─────────────────
+assert(terms.includes('title="Terms of Service"'), 'The terms page must be titled "Terms of Service".');
+assert(meta.includes("TERMS_EFFECTIVE_DATE = '11 November 2026'"), 'The terms should take effect on 11 November 2026.');
+assert(meta.includes("TERMS_LAST_UPDATED = '11 November 2026'"), 'The terms should be last updated 11 November 2026.');
+assert(/effectiveDate=\{TERMS_EFFECTIVE_DATE\}/.test(terms), '/terms should show its own effective date.');
+for (const marker of ['MARK TO CONFIRM', 'DRAFT', 'Questions for Mark', 'Recommended']) {
+  assert(!terms.includes(marker), `The published terms must not carry the draft marker "${marker}".`);
+}
+assert(!/<(p|li|h3)>[^\n]*\[/.test(terms), 'The published terms must not carry a [placeholder] in their text.');
+for (const [needle, why] of [
+  ['the GRIDGO team, Davao City, Philippines', 'name the operator'],
+  ["you may use GRIDGO only with your parent's or guardian's consent", 'let minors use GRIDGO with guardian consent'],
+  ['Riders must be 18 or older', 'require riders to be 18 or older'],
+  ['If an order stays unpaid, GRIDGO may cancel it', 'say unpaid orders may be cancelled'],
+  ['There is no separate cancellation fee.', 'say there is no cancellation fee'],
+  ['limited to what you paid for that order', 'cap liability at the order amount'],
+  ['within 30 days', 'give support 30 days to settle a dispute'],
+  ['proper courts of Davao City', 'name Davao City courts'],
+  ['commit fraud, put people or orders at risk', 'list the grounds for suspension'],
+  ['to="/privacy"', 'link to the privacy policy'],
+]) {
+  assert(terms.includes(needle), `The terms should ${why}.`);
+}
+assert(!/guarantee/i.test(terms), 'The terms must not name a reprint guarantee.');
+
 // ── Prerender safety ──────────────────────────────────────────────────────
 // The server renders dark and the browser may be light; markup that branches
 // on the theme would make hydration disagree with the prerendered HTML.
-assert(!/isDarkMode/.test(layout + privacy + deletion), 'Legal pages must not branch markup on isDarkMode.');
+assert(!/isDarkMode/.test(layout + privacy + deletion + terms), 'Legal pages must not branch markup on isDarkMode.');
 
 console.log('legal pages ok');
