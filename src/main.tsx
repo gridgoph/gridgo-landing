@@ -13,7 +13,7 @@ const app = (
   </StrictMode>
 )
 
-// /privacy and /delete-account arrive with their text already in the HTML
+// /privacy, /delete-account and /terms arrive with their text already in the HTML
 // (scripts/prerender-legal.mjs). Hydrating keeps that text on screen while the
 // route's chunk loads; every other route starts from an empty root.
 if (container.hasChildNodes()) {
