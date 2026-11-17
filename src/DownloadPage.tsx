@@ -132,7 +132,7 @@ function AppCard({ app, index, featured }: { app: GridgoApp; index: number; feat
           }`}
         />
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
+        <div className="flex flex-col items-start gap-2 mb-3">
           <p className="text-[10px] tracking-[0.35em] uppercase text-[var(--color-primary)] font-bold">
             {app.audience}
           </p>
