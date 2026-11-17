@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import {
   LandingRoute,
@@ -12,7 +12,9 @@ import {
   DeleteAccountRoute,
   LegalLibraryRoute,
   LegalDocumentRoute,
+  EarlyAccessStatusRoute,
 } from './routes'
+import { rememberSource } from './earlyAccess/api'
 import { ScrollBehaviour } from './utils/ScrollBehaviour'
 import { CookieConsent } from './consent/CookieConsent'
 
@@ -20,6 +22,21 @@ import { CookieConsent } from './consent/CookieConsent'
 function WalkthroughsRedirect() {
   const { search, hash } = useLocation()
   return <Navigate to={{ pathname: '/tutorials', search, hash }} replace />
+}
+
+/** /early-access is the short link for booths and posts: the sign-up on /download. */
+function EarlyAccessRedirect() {
+  const { search } = useLocation()
+  return <Navigate to={{ pathname: '/download', search, hash: '#early-access' }} replace />
+}
+
+/** Keep `?src=` from whichever page the visitor arrived on, through to the sign-up. */
+function SourceCapture() {
+  const { search } = useLocation()
+  useEffect(() => {
+    rememberSource(search)
+  }, [search])
+  return null
 }
 
 /**
@@ -32,11 +49,14 @@ export function AppRoutes() {
   return (
     <>
       <ScrollBehaviour />
+      <SourceCapture />
       <Suspense fallback={<div className="min-h-screen bg-white dark:bg-black" />}>
         <Routes>
           <Route path="/" element={<LandingRoute />} />
           <Route path="/support" element={<SupportRoute />} />
           <Route path="/download" element={<DownloadRoute />} />
+          <Route path="/early-access" element={<EarlyAccessRedirect />} />
+          <Route path="/early-access/status" element={<EarlyAccessStatusRoute />} />
           <Route path="/tutorials" element={<TutorialsRoute />} />
           <Route path="/walkthroughs" element={<WalkthroughsRedirect />} />
           <Route path="/desk" element={<DeskRoute />} />

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
+  ArrowDown,
   ArrowLeft,
   Check,
   ChevronDown,
@@ -21,6 +22,16 @@ import {
 } from './utils/apkReleases';
 import type { ApkRelease } from './utils/apkReleases';
 import { useTheme } from './utils/useTheme';
+import { EarlyAccessForm } from './earlyAccess/EarlyAccessForm';
+import { EARLY_ACCESS_NOTE } from './earlyAccess/logic';
+
+function GooglePlayGlyph({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M3.609 1.814L13.792 12 3.61 22.186c-.165-.133-.298-.3-.389-.49A1.737 1.737 0 013 20.854V3.146c0-.306.075-.596.221-.842.146-.246.353-.448.6-.58.058-.031.121-.059.188-.083v.173zm1.116-.503l9.96 5.75L15.3 7.644 4.725 1.311zm11.393 6.643L20.655 10.6a1.738 1.738 0 010 2.802l-4.537 2.645-1.572-1.571 1.572-1.572zM4.725 22.689l10.575-6.333-1.403-1.403-9.172 7.736z" />
+    </svg>
+  );
+}
 
 /** The machine-readable facts about a build, set in mono like the site footer. */
 function DataRow({ label, value }: { label: string; value: string }) {
@@ -121,9 +132,14 @@ function AppCard({ app, index, featured }: { app: GridgoApp; index: number; feat
           }`}
         />
 
-        <p className="text-[10px] tracking-[0.35em] uppercase text-[var(--color-primary)] font-bold mb-3">
-          {app.audience}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
+          <p className="text-[10px] tracking-[0.35em] uppercase text-[var(--color-primary)] font-bold">
+            {app.audience}
+          </p>
+          <span className="text-[11px] font-semibold rounded-full px-2.5 py-0.5 border border-black/10 dark:border-white/15 text-gray-600 dark:text-gray-400">
+            Android only, install now
+          </span>
+        </div>
         <h2 className="text-2xl font-bold tracking-tight mb-1">{app.name}</h2>
         <p className="text-[11px] font-mono text-gray-500 dark:text-[#666] mb-5 break-all">
           {app.slug}
@@ -156,7 +172,7 @@ function AppCard({ app, index, featured }: { app: GridgoApp; index: number; feat
                 }`}
               >
                 <Download size={17} />
-                Download for Android
+                Download APK
               </a>
 
               {/* Version and size sit under the button so a short download is easy to spot. */}
@@ -254,6 +270,99 @@ const INSTALL_STEPS: [string, string][] = [
   ],
 ];
 
+/** The two ways in, side by side. Each card jumps to its section below. */
+function InstallChoices() {
+  return (
+    <nav aria-label="Ways to install" className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <a
+        href="#early-access"
+        className="group relative flex items-start gap-5 rounded-3xl border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/[0.07] p-6 md:p-8 transition hover:bg-[var(--color-primary)]/[0.12] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)]"
+      >
+        <span className="shrink-0 size-12 rounded-2xl bg-[var(--color-primary)] text-black flex items-center justify-center">
+          <GooglePlayGlyph className="w-6 h-6" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className="text-xs font-bold text-gray-600 dark:text-gray-400">Option 1</span>
+            <span className="text-[11px] font-bold rounded-full px-2.5 py-0.5 bg-[var(--color-primary)] text-black">
+              Recommended
+            </span>
+          </span>
+          <span className="block text-xl font-bold leading-snug">Google Play Early Access</span>
+          <span className="block mt-1.5 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            Install from Google Play. Updates arrive on their own.
+          </span>
+        </span>
+        <ArrowDown
+          size={20}
+          aria-hidden="true"
+          className="shrink-0 mt-1 text-[var(--color-primary)] transition-transform group-hover:translate-y-1 motion-reduce:transition-none"
+        />
+      </a>
+
+      <a
+        href="#apk"
+        className="group relative flex items-start gap-5 rounded-3xl border border-black/15 dark:border-white/15 bg-black/[0.02] dark:bg-white/[0.02] p-6 md:p-8 transition hover:border-black/30 dark:hover:border-white/30 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)]"
+      >
+        <span className="shrink-0 size-12 rounded-2xl border border-black/15 dark:border-white/15 flex items-center justify-center">
+          <Download size={22} aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">Option 2</span>
+          <span className="block text-xl font-bold leading-snug">Direct Download (APK)</span>
+          <span className="block mt-1.5 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            Install the file now. Android only.
+          </span>
+        </span>
+        <ArrowDown
+          size={20}
+          aria-hidden="true"
+          className="shrink-0 mt-1 text-gray-500 transition-transform group-hover:translate-y-1 motion-reduce:transition-none"
+        />
+      </a>
+    </nav>
+  );
+}
+
+/** What happens after the button, shown beside the form where there is room. */
+const EARLY_ACCESS_STEPS = [
+  'Enter the email you use on Google Play.',
+  'We add you to the tester group and email your invite.',
+  'Open the invite and install GRIDGO from Google Play.',
+];
+
+function EarlyAccessSection() {
+  return (
+    <section id="early-access" className="scroll-mt-8 pt-20 md:pt-28">
+      <div className="relative overflow-hidden rounded-3xl border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/[0.05] p-6 sm:p-8 md:p-14">
+        <div className="absolute -top-24 -right-24 w-80 h-80 bg-[var(--color-primary)]/15 blur-[100px] pointer-events-none rounded-full" />
+        <div className="relative grid grid-cols-1 md:grid-cols-[1fr_minmax(0,420px)] gap-8 md:gap-16 items-start">
+          <div>
+            <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary)] mb-3 font-bold">
+              Option 1
+            </p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">Google Play Early Access</h2>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              For the GRIDGO customer app. {EARLY_ACCESS_NOTE}
+            </p>
+            <ol className="hidden md:flex flex-col gap-5 mt-10">
+              {EARLY_ACCESS_STEPS.map((step, i) => (
+                <li key={step} className="flex items-start gap-4">
+                  <span className="shrink-0 w-8 h-8 rounded-full border border-[var(--color-primary)]/50 bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-mono text-[13px] font-bold flex items-center justify-center">
+                    {i + 1}
+                  </span>
+                  <span className="pt-1 text-gray-700 dark:text-gray-300 leading-relaxed">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <EarlyAccessForm />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function DownloadPage() {
   const { isDarkMode, toggleDarkMode } = useTheme();
   const featuredKey = GRIDGO_APPS[0]?.key;
@@ -287,23 +396,40 @@ export function DownloadPage() {
           initial={{ opacity: 0, y: 30, filter: 'blur(15px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="text-center mb-20"
+          className="text-center mb-12 md:mb-16"
         >
           <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary)] mb-3 font-bold">
             Three apps. One grid.
           </p>
           <h1 className="text-4xl md:text-5xl font-bold mb-6">Get GRIDGO</h1>
           <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-lg leading-relaxed">
-            Each side of a print job has its own app. Pick the one that describes you.
+            Two ways to install. Pick the one that fits you.
           </p>
         </motion.header>
 
-        {/* The three apps */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {GRIDGO_APPS.map((app, i) => (
-            <AppCard key={app.key} app={app} index={i} featured={app.key === featuredKey} />
-          ))}
-        </div>
+        <InstallChoices />
+
+        <EarlyAccessSection />
+
+        {/* Option 2: the three APKs */}
+        <section id="apk" className="scroll-mt-8 pt-20 md:pt-28">
+          <header className="mb-10 md:mb-12 max-w-2xl">
+            <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary)] mb-3 font-bold">
+              Option 2
+            </p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Direct Download (APK)</h2>
+            <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
+              Each side of a print job has its own app. Pick the one that describes you.
+            </p>
+          </header>
+
+          {/* The three apps */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {GRIDGO_APPS.map((app, i) => (
+              <AppCard key={app.key} app={app} index={i} featured={app.key === featuredKey} />
+            ))}
+          </div>
+        </section>
 
         <InstallHelp />
 
@@ -372,15 +498,16 @@ export function DownloadPage() {
               </div>
             </div>
 
-            {/* Google Play button */}
-            <div className="border border-black/20 dark:border-white/20 bg-white dark:bg-black/40 rounded-lg px-3 py-1.5 flex items-center gap-2 h-[44px] opacity-70">
-              <svg className="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3.609 1.814L13.792 12 3.61 22.186c-.165-.133-.298-.3-.389-.49A1.737 1.737 0 013 20.854V3.146c0-.306.075-.596.221-.842.146-.246.353-.448.6-.58.058-.031.121-.059.188-.083v.173zm1.116-.503l9.96 5.75L15.3 7.644 4.725 1.311zm11.393 6.643L20.655 10.6a1.738 1.738 0 010 2.802l-4.537 2.645-1.572-1.571 1.572-1.572zM4.725 22.689l10.575-6.333-1.403-1.403-9.172 7.736z" />
-              </svg>
+            {/* Google Play: early access is open, so this one is live */}
+            <a
+              href="#early-access"
+              className="border border-black/20 dark:border-white/20 bg-white dark:bg-black/40 rounded-lg px-3 py-1.5 flex items-center gap-2 h-[44px] hover:border-[var(--color-primary)] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+            >
+              <GooglePlayGlyph className="w-[22px] h-[22px]" />
               <div className="flex flex-col items-start justify-center">
                 <span className="text-[14px] font-semibold leading-[1]">Google Play</span>
               </div>
-            </div>
+            </a>
           </div>
         </motion.section>
       </div>

@@ -11,6 +11,7 @@ import { useTheme } from './utils/useTheme';
 import { OpenerStage } from './components/OpenerIntro';
 import { FooterLegalLinks } from './legal/FooterLegalLinks';
 import { openCookieSettings } from './consent/cookieChoice';
+import { EARLY_ACCESS_NOTE } from './earlyAccess/logic';
 
 /**
  * three.js is most of the landing bundle and the scene is decorative, so it is
@@ -100,6 +101,9 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
 
         {/* Right Nav */}
         <div className="flex items-center gap-3 z-50">
+          <Link to="/download#early-access" className={`hidden md:flex items-center px-5 py-2 rounded-full border border-[var(--color-primary)] text-sm font-bold text-black dark:text-white hover:bg-[var(--color-primary)] hover:text-black transition duration-300 ${isScrolled ? 'bg-white/80 dark:bg-black/60 backdrop-blur-md' : 'bg-transparent'}`}>
+            Get Early Access
+          </Link>
           <Link to="/download" className="hidden md:flex items-center px-6 py-2 bg-[var(--color-primary)] text-black font-bold text-sm rounded-full hover:brightness-110 transition shadow-[0_0_15px_rgba(255,222,88,0.3)]">
             Download
           </Link>
@@ -136,6 +140,7 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
               <a key={link.id} href={link.href} onClick={() => setIsOpen(false)} aria-current={active === link.id ? 'true' : undefined} className={`text-2xl font-bold transition-colors ${linkClass(link.id)}`}>{link.label}</a>
             ))}
             <Link to="/tutorials" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Tutorials</Link>
+            <Link to="/download#early-access" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Get Early Access</Link>
             <Link to="/download" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Download</Link>
             {/* <div className="flex gap-4 mt-8">
               <button className="px-8 py-3 bg-white dark:bg-black/60 backdrop-blur-md border border-black/10 dark:border-white/10 rounded-full transition-colors font-bold" onClick={() => setIsOpen(false)}>Log In</button>
@@ -145,6 +150,14 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+function GooglePlayMark() {
+  return (
+    <svg className="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M3.609 1.814L13.792 12 3.61 22.186c-.165-.133-.298-.3-.389-.49A1.737 1.737 0 013 20.854V3.146c0-.306.075-.596.221-.842.146-.246.353-.448.6-.58.058-.031.121-.059.188-.083v.173zm1.116-.503l9.96 5.75L15.3 7.644 4.725 1.311zm11.393 6.643L20.655 10.6a1.738 1.738 0 010 2.802l-4.537 2.645-1.572-1.571 1.572-1.572zM4.725 22.689l10.575-6.333-1.403-1.403-9.172 7.736z" />
+    </svg>
   );
 }
 
@@ -195,6 +208,22 @@ function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed:
             <p className="mx-auto mb-2 w-full max-w-2xl text-base font-medium leading-relaxed text-gray-700 dark:text-gray-300 sm:text-lg md:text-xl">
               Send your files from the app straight to our printers. We'll handle the printing and deliver it to your door so you don't have to leave your seat.
             </p>
+            <div className="mt-5 mb-2 flex w-full max-w-md flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+              <Link
+                to="/download#early-access"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-primary)] px-7 py-3.5 text-[15px] font-bold text-black shadow-[0_0_20px_rgba(255,222,88,0.35)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              >
+                <GooglePlayMark />
+                Get Early Access on Google Play
+              </Link>
+              <Link
+                to="/download#apk"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-black/25 bg-white/60 px-7 py-3.5 text-[15px] font-bold text-black backdrop-blur-md transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] dark:border-white/30 dark:bg-black/40 dark:text-white dark:hover:text-[var(--color-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              >
+                Direct download (APK)
+              </Link>
+            </div>
+            <p className="mb-5 text-sm font-medium text-gray-700 dark:text-gray-300">{EARLY_ACCESS_NOTE}</p>
             {revealed && (
               <motion.a
                 href="#features"

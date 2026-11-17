@@ -41,6 +41,13 @@ export function ScrollBehaviour() {
       }
     }
 
+    // A link into another route's section (/download#early-access) arrives
+    // before that route's lazy chunk has mounted, so the section does not exist
+    // yet. Start at the top as usual, then land on it once it appears.
+    // Not tied to this effect's cleanup: StrictMode re-runs the effect, and the
+    // re-run no longer sees the hash as changed.
+    if (hashChanged && isAnchorSyntax(hash)) scrollWhenMounted(hash);
+
     if (navigationType === 'POP') return;
 
     let second = 0;
@@ -60,8 +67,34 @@ export function ScrollBehaviour() {
 }
 
 /** Clerk sign-in steps use hashes such as `#/factor-one`, which are not element ids. */
+function isAnchorSyntax(hash: string): boolean {
+  return /^#[A-Za-z][\w-]*$/.test(hash);
+}
+
+/**
+ * Watch for the element for a few seconds; give up quietly if it never comes
+ * or the reader has already moved on to another address.
+ */
+function scrollWhenMounted(hash: string) {
+  const path = window.location.pathname;
+  const observer = new MutationObserver(() => {
+    if (window.location.pathname !== path || window.location.hash !== hash) return stop();
+    const anchor = document.querySelector(hash);
+    if (!anchor) return;
+    stop();
+    // After the route's own first paint, or its scroll-to-top wins.
+    requestAnimationFrame(() => requestAnimationFrame(() => anchor.scrollIntoView()));
+  });
+  const timer = window.setTimeout(() => stop(), 6000);
+  function stop() {
+    observer.disconnect();
+    window.clearTimeout(timer);
+  }
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
 function isPageAnchor(hash: string): boolean {
-  if (!/^#[A-Za-z][\w-]*$/.test(hash)) return false;
+  if (!isAnchorSyntax(hash)) return false;
   try {
     return document.querySelector(hash) != null;
   } catch {

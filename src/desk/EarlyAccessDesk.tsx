@@ -1,0 +1,256 @@
+import { useEffect, useState } from 'react';
+import {
+  EARLY_ACCESS_PAGE_SIZE,
+  grantEarlyAccess,
+  listEarlyAccess,
+  type EarlyAccessPage,
+  type EarlyAccessSignup,
+} from './api';
+
+type Filter = 'pending' | 'granted' | 'all';
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * Google Play early-access sign-ups. The order of work is: add the email to the
+ * Play tester group, then press Granted, which emails the person the opt-in link.
+ */
+export function EarlyAccessDesk() {
+  const [filter, setFilter] = useState<Filter>('pending');
+  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
+  const [rows, setRows] = useState<EarlyAccessSignup[]>([]);
+  const [page, setPage] = useState<Pick<EarlyAccessPage, 'counts' | 'total'> | null>(null);
+  /** The filter and search the rows on screen belong to; anything else is loading. */
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Search as the operator types, without a request per keystroke.
+  useEffect(() => {
+    const timer = window.setTimeout(() => setQuery(search.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  const key = `${filter}|${query}`;
+  const loading = loadedKey !== key;
+  useEffect(() => {
+    let cancelled = false;
+    listEarlyAccess({ status: filter, q: query, offset: 0 })
+      .then((result) => {
+        if (cancelled) return;
+        setRows(result.signups);
+        setPage({ counts: result.counts, total: result.total });
+        setError('');
+      })
+      .catch((caught) => {
+        if (cancelled) return;
+        setRows([]);
+        setError(caught instanceof Error ? caught.message : 'Could not load sign-ups.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadedKey(`${filter}|${query}`);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filter, query]);
+
+  useEffect(() => {
+    if (!copiedId) return;
+    const timer = window.setTimeout(() => setCopiedId(null), 1500);
+    return () => window.clearTimeout(timer);
+  }, [copiedId]);
+
+  async function loadMore() {
+    setLoadingMore(true);
+    try {
+      const result = await listEarlyAccess({ status: filter, q: query, offset: rows.length });
+      setRows((current) => [...current, ...result.signups.filter((row) => !current.some((c) => c.id === row.id))]);
+      setPage({ counts: result.counts, total: result.total });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not load more sign-ups.');
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
+  async function grant(row: EarlyAccessSignup) {
+    setBusyId(row.id);
+    setError('');
+    setNotice('');
+    try {
+      const updated = await grantEarlyAccess(row.id);
+      setRows((current) => current.map((r) => (r.id === updated.id ? updated : r)));
+      if (row.status !== 'granted') {
+        setPage((current) =>
+          current
+            ? {
+                ...current,
+                counts: {
+                  pending: Math.max(0, current.counts.pending - 1),
+                  granted: current.counts.granted + 1,
+                },
+              }
+            : current,
+        );
+      }
+      setNotice(`Granted. The Google Play invite is on its way to ${updated.email}.`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not grant access.');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function copy(row: EarlyAccessSignup) {
+    try {
+      await navigator.clipboard.writeText(row.email);
+      setCopiedId(row.id);
+    } catch {
+      // Clipboard blocked: the address is selectable text.
+    }
+  }
+
+  const counts = page?.counts ?? { pending: 0, granted: 0 };
+  const label: Record<Filter, string> = {
+    pending: `Pending ${counts.pending}`,
+    granted: `Granted ${counts.granted}`,
+    all: `All ${counts.pending + counts.granted}`,
+  };
+  const more = page ? rows.length < page.total : false;
+
+  return (
+    <div className="min-h-0 desk-scroll overflow-y-auto p-4 sm:p-6 md:p-10">
+      <div className="max-w-5xl">
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">Google Play early access</h1>
+        <p className="text-sm text-[#8a8a8a] mb-6 max-w-2xl">
+          Add the email to the Play tester group first, then press Granted. Granted emails them the
+          Google Play opt-in link.
+        </p>
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+          <div className="flex gap-1 text-xs uppercase tracking-[0.18em]" role="tablist" aria-label="Status">
+            {(['pending', 'granted', 'all'] as Filter[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={filter === key}
+                onClick={() => setFilter(key)}
+                className={`px-3 py-2 whitespace-nowrap ${filter === key ? 'text-black bg-[#FFDE58]' : 'text-[#8a8a8a] hover:text-[#f4f4f4]'}`}
+              >
+                {label[key]}
+              </button>
+            ))}
+          </div>
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search email"
+            aria-label="Search email"
+            maxLength={254}
+            className="sm:ml-auto w-full sm:w-72 bg-[#101010] text-[#f4f4f4] border border-[#262626] px-4 py-2.5 text-sm outline-none focus:border-[#FFDE58]"
+          />
+        </div>
+
+        {error ? <p className="text-red-400 text-sm mb-4" role="alert">{error}</p> : null}
+        {notice ? <p className="text-[#FFDE58] text-sm mb-4" role="status">{notice}</p> : null}
+
+        {loading ? (
+          <p className="py-10 text-sm text-[#8a8a8a]">Loading sign-ups…</p>
+        ) : rows.length === 0 ? (
+          <p className="py-10 text-sm text-[#8a8a8a]">
+            {query ? 'No sign-ups match that email.' : filter === 'pending' ? 'Nobody is waiting.' : 'No sign-ups yet.'}
+          </p>
+        ) : (
+          <table className="w-full text-sm border-t border-[#262626]">
+            <thead className="hidden md:table-header-group">
+              <tr className="text-left text-[10px] uppercase tracking-[0.2em] text-[#8a8a8a]">
+                <th className="py-3 pr-4 font-normal">Email</th>
+                <th className="py-3 pr-4 font-normal">Source</th>
+                <th className="py-3 pr-4 font-normal">Status</th>
+                <th className="py-3 pr-4 font-normal">Signed up</th>
+                <th className="py-3 font-normal"><span className="sr-only">Action</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 py-4 md:table-row md:py-0 border-b border-[#1c1c1c]"
+                >
+                  <td className="min-w-0 md:py-4 md:pr-4">
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-semibold break-all select-all">{row.email}</span>
+                      <button
+                        type="button"
+                        onClick={() => copy(row)}
+                        className="shrink-0 text-[11px] text-[#8a8a8a] hover:text-[#FFDE58]"
+                      >
+                        {copiedId === row.id ? 'Copied' : 'Copy'}
+                      </button>
+                    </span>
+                  </td>
+                  <td className="col-start-1 text-[#cfcfcf] md:py-4 md:pr-4">
+                    <span className="md:hidden text-[#8a8a8a]">Source: </span>
+                    {row.source ?? <span className="text-[#5a5a5a]">direct</span>}
+                  </td>
+                  <td className="col-start-1 md:py-4 md:pr-4">
+                    <span
+                      className={`text-[10px] uppercase tracking-[0.2em] ${
+                        row.status === 'pending' ? 'text-[#FFDE58]' : 'text-[#8a8a8a]'
+                      }`}
+                    >
+                      {row.status}
+                    </span>
+                    {row.status === 'granted' && row.grantedAt ? (
+                      <span className="block text-[11px] text-[#8a8a8a]">{formatDate(row.grantedAt)}</span>
+                    ) : null}
+                  </td>
+                  <td className="col-start-1 text-[#8a8a8a] md:py-4 md:pr-4 whitespace-nowrap">
+                    {formatDate(row.createdAt)}
+                  </td>
+                  <td className="col-start-2 row-start-1 row-span-4 self-center md:py-4 text-right">
+                    {row.status === 'pending' ? (
+                      <button
+                        type="button"
+                        onClick={() => grant(row)}
+                        disabled={busyId === row.id}
+                        className="px-5 py-2.5 bg-[#FFDE58] text-black font-bold whitespace-nowrap disabled:opacity-50"
+                      >
+                        {busyId === row.id ? 'Granting…' : 'Granted'}
+                      </button>
+                    ) : (
+                      <span className="text-[#5a5a5a] text-xs">Invite sent</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {more && !loading ? (
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="mt-6 px-6 py-3 border border-[#262626] text-[#f4f4f4] hover:border-[#FFDE58] disabled:opacity-50"
+          >
+            {loadingMore ? 'Loading…' : `Show ${Math.min(EARLY_ACCESS_PAGE_SIZE, (page?.total ?? 0) - rows.length)} more`}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
