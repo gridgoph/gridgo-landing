@@ -46,3 +46,7 @@ export const LegalLibraryRoute = lazy(() =>
 export const LegalDocumentRoute = lazy(() =>
   import('./legal/LegalLibraryPages').then((m) => ({ default: m.LegalDocumentPage })),
 )
+
+export const EarlyAccessStatusRoute = lazy(() =>
+  import('./earlyAccess/EarlyAccessStatusPage').then((m) => ({ default: m.EarlyAccessStatusPage })),
+)

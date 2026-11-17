@@ -38,9 +38,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const response = await fetch(`${apiBaseUrl}${path}`, { ...init, headers });
   if (response.status === 204) return undefined as T;
-  const data = (await response.json().catch(() => ({}))) as { message?: string } & T;
+  const data = (await response.json().catch(() => ({}))) as { message?: string; error?: string } & T;
   if (!response.ok) {
-    throw new DeskApiError(data.message || `Request failed (${response.status})`, response.status);
+    throw new DeskApiError(data.message || data.error || `Request failed (${response.status})`, response.status);
   }
   return data;
 }
@@ -82,4 +82,50 @@ export function replyToTicket(id: string, replyMessage: string) {
 
 export function deleteTicket(id: string) {
   return request<void>(`/support-tickets/${id}`, { method: 'DELETE' });
+}
+
+// ── Google Play early access (gridgo-api docs/EARLY_ACCESS_API.md) ──────────
+
+export type EarlyAccessSignup = {
+  id: string;
+  email: string;
+  source: string | null;
+  platform: string;
+  status: 'pending' | 'granted';
+  createdAt: string;
+  grantedAt: string | null;
+  grantedBy: string | null;
+};
+
+export type EarlyAccessPage = {
+  signups: EarlyAccessSignup[];
+  counts: { pending: number; granted: number };
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export const EARLY_ACCESS_PAGE_SIZE = 50;
+
+export function listEarlyAccess(query: {
+  status: 'pending' | 'granted' | 'all';
+  q: string;
+  offset: number;
+}) {
+  const params = new URLSearchParams({
+    limit: String(EARLY_ACCESS_PAGE_SIZE),
+    offset: String(query.offset),
+  });
+  if (query.status !== 'all') params.set('status', query.status);
+  const q = query.q.trim();
+  if (q) params.set('q', q.slice(0, 254));
+  return request<EarlyAccessPage>(`/early-access/desk?${params}`);
+}
+
+/** Marks the sign-up granted and emails the Play opt-in link. Repeating it changes nothing. */
+export function grantEarlyAccess(id: string) {
+  return request<EarlyAccessSignup>(`/early-access/desk/${encodeURIComponent(id)}/grant`, {
+    method: 'POST',
+    body: '{}',
+  });
 }
