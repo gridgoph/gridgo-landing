@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Check, ExternalLink, Loader2, Moon, Sun } from 'lucide-react';
@@ -12,6 +12,15 @@ type Load =
   | { state: 'loading' }
   | { state: 'missing' }
   | { state: 'ready'; result: StatusResult; stale: boolean };
+
+/** Move focus to a view's heading when it appears, so a screen reader announces it. */
+function useFocusOnMount<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    ref.current?.focus({ preventScroll: true });
+  }, []);
+  return ref;
+}
 
 const STEPS = ['Request received', 'Adding you to the tester group', 'Sending your Google Play invite'];
 
@@ -110,7 +119,7 @@ export function EarlyAccessStatusPage() {
       <div className="relative z-10 w-full max-w-[1200px] mx-auto px-6 pt-8 md:pt-14 flex items-center justify-between">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-[var(--color-primary)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)] rounded"
+          className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-[var(--color-primary-text)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)] rounded"
         >
           <ArrowLeft size={20} />
           <span>Back to Home</span>
@@ -154,6 +163,7 @@ export function EarlyAccessStatusPage() {
 function Waiting({ createdAt, now, stale }: { createdAt: string; now: number; stale: boolean }) {
   const { remaining, showSpamHint } = waitingPhase(createdAt, now);
   const lit = litDots(remaining, 'pending');
+  const heading = useFocusOnMount<HTMLHeadingElement>();
 
   return (
     <motion.div
@@ -164,12 +174,12 @@ function Waiting({ createdAt, now, stale }: { createdAt: string; now: number; st
     >
       <GridDots lit={lit} size={22} />
 
-      <h1 className="mt-10 text-3xl md:text-4xl font-bold tracking-tight" aria-live="polite">
+      <h1 ref={heading} tabIndex={-1} className="mt-10 text-3xl md:text-4xl font-bold tracking-tight outline-none" aria-live="polite">
         Setting up your access…
       </h1>
 
       <p
-        className="mt-4 text-6xl md:text-7xl font-bold tabular-nums tracking-tight text-[var(--color-primary)]"
+        className="mt-4 text-6xl md:text-7xl font-bold tabular-nums tracking-tight text-[var(--color-primary-text)]"
         role="timer"
         aria-label={remaining > 0 ? `About ${Math.ceil(remaining / 60)} minutes left` : 'Any minute now'}
       >
@@ -189,8 +199,8 @@ function Waiting({ createdAt, now, stale }: { createdAt: string; now: number; st
                   state === 'done'
                     ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-black'
                     : state === 'active'
-                      ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
-                      : 'border-black/15 dark:border-white/15 text-gray-400 dark:text-gray-600'
+                      ? 'border-[var(--color-primary)] text-[var(--color-primary-text)]'
+                      : 'border-black/15 dark:border-white/15 text-gray-600 dark:text-gray-400'
                 }`}
                 aria-hidden="true"
               >
@@ -204,7 +214,7 @@ function Waiting({ createdAt, now, stale }: { createdAt: string; now: number; st
               </span>
               <span
                 className={
-                  state === 'next' ? 'text-gray-500 dark:text-gray-500' : 'font-semibold text-black dark:text-white'
+                  state === 'next' ? 'text-gray-600 dark:text-gray-400' : 'font-semibold text-black dark:text-white'
                 }
               >
                 {step}
@@ -228,7 +238,7 @@ function Waiting({ createdAt, now, stale }: { createdAt: string; now: number; st
           </p>
           <Link
             to="/download#apk"
-            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-black/20 dark:border-white/25 font-bold text-sm hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-black/20 dark:border-white/25 font-bold text-sm hover:border-[var(--color-primary)] hover:text-[var(--color-primary-text)] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
           >
             Direct download (APK)
           </Link>
@@ -239,7 +249,7 @@ function Waiting({ createdAt, now, stale }: { createdAt: string; now: number; st
         You can close this page. We'll email you when you're in.
       </p>
       {stale ? (
-        <p className="mt-2 text-xs text-gray-500" role="status">
+        <p className="mt-2 text-xs text-gray-600 dark:text-gray-400" role="status">
           Could not check just now. Trying again shortly.
         </p>
       ) : null}
@@ -248,6 +258,7 @@ function Waiting({ createdAt, now, stale }: { createdAt: string; now: number; st
 }
 
 function Granted({ optInUrl }: { optInUrl: string | null }) {
+  const heading = useFocusOnMount<HTMLHeadingElement>();
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
@@ -256,7 +267,7 @@ function Granted({ optInUrl }: { optInUrl: string | null }) {
       className="flex flex-col items-center text-center"
     >
       <GridDots lit={9} size={22} />
-      <h1 className="mt-10 text-5xl md:text-6xl font-bold tracking-tight text-[var(--color-primary)]" aria-live="polite">
+      <h1 ref={heading} tabIndex={-1} className="mt-10 text-5xl md:text-6xl font-bold tracking-tight text-[var(--color-primary-text)] outline-none" aria-live="polite">
         You're in
       </h1>
       <p className="mt-4 text-lg text-gray-700 dark:text-gray-300">Your invite is in your inbox.</p>

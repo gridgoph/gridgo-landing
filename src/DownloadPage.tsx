@@ -338,7 +338,7 @@ function EarlyAccessSection() {
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-[var(--color-primary)]/15 blur-[100px] pointer-events-none rounded-full" />
         <div className="relative grid grid-cols-1 md:grid-cols-[1fr_minmax(0,420px)] gap-8 md:gap-16 items-start">
           <div>
-            <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary)] mb-3 font-bold">
+            <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary-text)] mb-3 font-bold">
               Option 1
             </p>
             <h2 className="text-3xl md:text-4xl font-bold mb-3">Google Play Early Access</h2>
@@ -348,7 +348,7 @@ function EarlyAccessSection() {
             <ol className="hidden md:flex flex-col gap-5 mt-10">
               {EARLY_ACCESS_STEPS.map((step, i) => (
                 <li key={step} className="flex items-start gap-4">
-                  <span className="shrink-0 w-8 h-8 rounded-full border border-[var(--color-primary)]/50 bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-mono text-[13px] font-bold flex items-center justify-center">
+                  <span className="shrink-0 w-8 h-8 rounded-full border border-[var(--color-primary)]/50 bg-[var(--color-primary)]/10 text-[var(--color-primary-text)] font-mono text-[13px] font-bold flex items-center justify-center">
                     {i + 1}
                   </span>
                   <span className="pt-1 text-gray-700 dark:text-gray-300 leading-relaxed">{step}</span>
@@ -414,7 +414,7 @@ export function DownloadPage() {
         {/* Option 2: the three APKs */}
         <section id="apk" className="scroll-mt-8 pt-20 md:pt-28">
           <header className="mb-10 md:mb-12 max-w-2xl">
-            <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary)] mb-3 font-bold">
+            <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary-text)] mb-3 font-bold">
               Option 2
             </p>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Direct Download (APK)</h2>

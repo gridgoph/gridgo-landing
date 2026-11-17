@@ -133,6 +133,82 @@ assert(desk.includes('<EarlyAccessDesk />'), 'Early access lives inside the exis
 assert(earlyDesk.includes("'Granted'") || earlyDesk.includes('Granted'), 'Each pending row has a Granted button.');
 assert(earlyDesk.includes('row.source') && earlyDesk.includes('row.createdAt'));
 
+// ── Desk list races (review of PR #45, F1 and F2) ───────────────────────────
+const L = await import('../src/desk/earlyAccessList.ts');
+const person = (i, status = 'pending') => ({
+  id: `id-${i}`, email: `tester${i}@example.com`, source: null, platform: 'android', status,
+  createdAt: '2026-11-17T10:00:00.000Z', grantedAt: null, grantedBy: null,
+});
+const pageOf = (rows, total, counts) => ({ signups: rows, counts, total, limit: 50, offset: 0 });
+const pendingKey = L.listKey('pending', '');
+
+// F1: 51 waiting, 50 shown. Granting one must not strand the 51st behind a stale offset.
+let list = L.listReducer(L.initialList, { type: 'request', key: pendingKey, generation: 1 });
+list = L.listReducer(list, { type: 'page', key: pendingKey, generation: 1, offset: 0,
+  page: pageOf(Array.from({ length: 50 }, (_, i) => person(i)), 51, { pending: 51, granted: 0 }) });
+assert.ok(L.hasMore(list), '51 pending with 50 shown offers Show more.');
+list = L.listReducer(list, { type: 'granted', row: { ...person(0), status: 'granted' } });
+list = L.listReducer(list, { type: 'request', key: pendingKey, generation: 2 });
+assert.equal(list.rows.length, 50, 'A reload after a grant keeps the rows up until the fresh page lands.');
+assert.ok(!L.hasMore(list), 'No paging from a stale offset while the reload is in flight.');
+list = L.listReducer(list, { type: 'page', key: pendingKey, generation: 2, offset: 0,
+  page: pageOf(Array.from({ length: 50 }, (_, i) => person(i + 1)), 50, { pending: 50, granted: 1 }) });
+assert.ok(list.rows.some((r) => r.email === 'tester50@example.com'), 'The last waiting person is reachable after a grant.');
+assert.ok(list.rows.every((r) => r.status === 'pending'), 'Pending shows only pending people after a grant.');
+assert.deepEqual(list.counts, { pending: 50, granted: 1 });
+assert(/dispatch\(\{ type: 'granted'[\s\S]*?setReloads\(/.test(earlyDesk), 'A grant reloads the current list from the top.');
+assert(/\[filter, query, reloads\]/.test(earlyDesk), 'The list effect reruns on a reload.');
+
+// F2: a slow Show more from Pending must not land in Granted (or in a new search).
+list = L.listReducer(L.initialList, { type: 'request', key: pendingKey, generation: 1 });
+list = L.listReducer(list, { type: 'page', key: pendingKey, generation: 1, offset: 0,
+  page: pageOf(Array.from({ length: 50 }, (_, i) => person(i)), 51, { pending: 51, granted: 0 }) });
+list = L.listReducer(list, { type: 'request-more' });
+const slowMore = { type: 'page', key: pendingKey, generation: 1, offset: 50,
+  page: pageOf([person(50)], 51, { pending: 51, granted: 0 }) };
+const grantedKey = L.listKey('granted', '');
+list = L.listReducer(list, { type: 'request', key: grantedKey, generation: 2 });
+list = L.listReducer(list, { type: 'page', key: grantedKey, generation: 2, offset: 0,
+  page: pageOf([], 0, { pending: 51, granted: 0 }) });
+list = L.listReducer(list, slowMore);
+assert.deepEqual(list.rows, [], 'A stale Pending page is dropped from the Granted view.');
+assert.equal(list.loadingMore, false);
+const searchKey = L.listKey('pending', 'ana');
+list = L.listReducer(list, { type: 'request', key: searchKey, generation: 3 });
+list = L.listReducer(list, { ...slowMore, generation: 2, key: grantedKey });
+list = L.listReducer(list, { type: 'failed', key: pendingKey, generation: 1, offset: 50, message: 'late' });
+assert.deepEqual([list.rows.length, list.error, list.loading], [0, '', true], 'Old responses and errors never reach a new search.');
+assert(/const ticket = \{ key: list\.key, generation: list\.generation \}/.test(earlyDesk), 'Show more is tied to the list it was asked for.');
+
+// F4: the queue is a landmark.
+assert(/<main aria-labelledby="early-access-desk-title"/.test(earlyDesk), 'The early-access desk is a main landmark.');
+
+// ── Contrast (review F3) ──────────────────────────────────────────────────
+const css = read('../src/index.css');
+const hex = (name, scope) => css.slice(css.indexOf(scope)).match(new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{6})`))[1];
+const lum = (h) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const lightText = hex('--app-primary-text', '\n:root {');
+const darkText = hex('--app-primary-text', '\n.dark {');
+// The early-access card's palest point: 5% + glow of #D4A000 over white is about #F9F1D9.
+for (const bg of ['#FFFFFF', '#F9F1D9']) {
+  assert.ok(ratio(lightText, bg) >= 4.5, `Light brand text ${lightText} on ${bg} is ${ratio(lightText, bg).toFixed(2)}:1, under 4.5:1.`);
+}
+assert.ok(ratio(darkText, '#000000') >= 4.5);
+assert.ok(ratio('#a3a3a3', '#070707') >= 4.5, 'Desk secondary text reaches 4.5:1.');
+for (const [file, text] of [['EarlyAccessStatusPage', status], ['EarlyAccessForm', form]]) {
+  assert(!/(?<![:-])text-\[var\(--color-primary\)\]/.test(text), `${file}: brand-coloured text uses --color-primary-text.`);
+}
+assert(!/#5a5a5a/.test(earlyDesk), 'No 2.9:1 grey left on the desk.');
+for (const label of ['Option 1', 'Option 2']) {
+  const at = download.lastIndexOf(label);
+  assert(download.slice(at - 200, at).includes('text-[var(--color-primary-text)]'), `The ${label} section label uses the readable brand colour.`);
+}
+assert(!/text-gray-500 dark:text-gray-500/.test(status), 'Waiting steps reach 4.5:1 in dark mode.');
+
 // ── Privacy ───────────────────────────────────────────────────────────────
 assert(privacy.includes('Google Play early-access form'), 'The privacy policy names the new form.');
 

@@ -58,7 +58,7 @@ export function EarlyAccessForm() {
             forgetSignUp();
             setExisting(null);
           }}
-          className="self-start text-sm text-gray-600 dark:text-gray-400 underline underline-offset-4 hover:text-[var(--color-primary)] transition-colors rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+          className="self-start text-sm text-gray-600 dark:text-gray-400 underline underline-offset-4 hover:text-[var(--color-primary-text)] transition-colors rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
         >
           Use a different email
         </button>
@@ -110,7 +110,7 @@ export function EarlyAccessForm() {
           Add this email to GRIDGO's Google Play test and email me the invite. I agree to the{' '}
           <Link
             to="/privacy"
-            className="underline underline-offset-4 decoration-[var(--color-primary)] hover:text-[var(--color-primary)]"
+            className="underline underline-offset-4 decoration-[var(--color-primary)] hover:text-[var(--color-primary-text)]"
           >
             Privacy Policy
           </Link>

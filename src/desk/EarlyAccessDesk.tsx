@@ -1,11 +1,6 @@
-import { useEffect, useState } from 'react';
-import {
-  EARLY_ACCESS_PAGE_SIZE,
-  grantEarlyAccess,
-  listEarlyAccess,
-  type EarlyAccessPage,
-  type EarlyAccessSignup,
-} from './api';
+import { useEffect, useReducer, useRef, useState } from 'react';
+import { EARLY_ACCESS_PAGE_SIZE, grantEarlyAccess, listEarlyAccess, type EarlyAccessSignup } from './api';
+import { hasMore, initialList, listKey, listReducer } from './earlyAccessList';
 
 type Filter = 'pending' | 'granted' | 'all';
 
@@ -16,6 +11,10 @@ function formatDate(iso: string | null): string {
   return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+function message(caught: unknown, fallback: string): string {
+  return caught instanceof Error ? caught.message : fallback;
+}
+
 /**
  * Google Play early-access sign-ups. The order of work is: add the email to the
  * Play tester group, then press Granted, which emails the person the opt-in link.
@@ -24,13 +23,12 @@ export function EarlyAccessDesk() {
   const [filter, setFilter] = useState<Filter>('pending');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
-  const [rows, setRows] = useState<EarlyAccessSignup[]>([]);
-  const [page, setPage] = useState<Pick<EarlyAccessPage, 'counts' | 'total'> | null>(null);
-  /** The filter and search the rows on screen belong to; anything else is loading. */
-  const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState('');
+  /** Bumped after a grant: the list it changed is fetched again from the top. */
+  const [reloads, setReloads] = useState(0);
+  const [list, dispatch] = useReducer(listReducer, initialList);
+  const generation = useRef(0);
   const [notice, setNotice] = useState('');
+  const [grantError, setGrantError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -40,29 +38,15 @@ export function EarlyAccessDesk() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
-  const key = `${filter}|${query}`;
-  const loading = loadedKey !== key;
+  const key = listKey(filter, query);
   useEffect(() => {
-    let cancelled = false;
-    listEarlyAccess({ status: filter, q: query, offset: 0 })
-      .then((result) => {
-        if (cancelled) return;
-        setRows(result.signups);
-        setPage({ counts: result.counts, total: result.total });
-        setError('');
-      })
-      .catch((caught) => {
-        if (cancelled) return;
-        setRows([]);
-        setError(caught instanceof Error ? caught.message : 'Could not load sign-ups.');
-      })
-      .finally(() => {
-        if (!cancelled) setLoadedKey(`${filter}|${query}`);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [filter, query]);
+    const ticket = { key: listKey(filter, query), generation: ++generation.current };
+    dispatch({ type: 'request', ...ticket });
+    listEarlyAccess({ status: filter, q: query, offset: 0 }).then(
+      (page) => dispatch({ type: 'page', ...ticket, offset: 0, page }),
+      (caught) => dispatch({ type: 'failed', ...ticket, offset: 0, message: message(caught, 'Could not load sign-ups.') }),
+    );
+  }, [filter, query, reloads]);
 
   useEffect(() => {
     if (!copiedId) return;
@@ -70,42 +54,31 @@ export function EarlyAccessDesk() {
     return () => window.clearTimeout(timer);
   }, [copiedId]);
 
-  async function loadMore() {
-    setLoadingMore(true);
-    try {
-      const result = await listEarlyAccess({ status: filter, q: query, offset: rows.length });
-      setRows((current) => [...current, ...result.signups.filter((row) => !current.some((c) => c.id === row.id))]);
-      setPage({ counts: result.counts, total: result.total });
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not load more sign-ups.');
-    } finally {
-      setLoadingMore(false);
-    }
+  function loadMore() {
+    // Tied to the list on screen now; the reducer drops it if the filter,
+    // search or generation has moved on by the time it answers.
+    const ticket = { key: list.key, generation: list.generation };
+    const offset = list.rows.length;
+    dispatch({ type: 'request-more' });
+    listEarlyAccess({ status: filter, q: query, offset }).then(
+      (page) => dispatch({ type: 'page', ...ticket, offset, page }),
+      (caught) => dispatch({ type: 'failed', ...ticket, offset, message: message(caught, 'Could not load more sign-ups.') }),
+    );
   }
 
   async function grant(row: EarlyAccessSignup) {
     setBusyId(row.id);
-    setError('');
+    setGrantError('');
     setNotice('');
     try {
       const updated = await grantEarlyAccess(row.id);
-      setRows((current) => current.map((r) => (r.id === updated.id ? updated : r)));
-      if (row.status !== 'granted') {
-        setPage((current) =>
-          current
-            ? {
-                ...current,
-                counts: {
-                  pending: Math.max(0, current.counts.pending - 1),
-                  granted: current.counts.granted + 1,
-                },
-              }
-            : current,
-        );
-      }
+      dispatch({ type: 'granted', row: updated });
+      // The grant moved this person out of Pending, so offsets into the old
+      // list no longer line up with the server's. Fetch it again from the top.
+      setReloads((count) => count + 1);
       setNotice(`Granted. The Google Play invite is on its way to ${updated.email}.`);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not grant access.');
+      setGrantError(message(caught, 'Could not grant access.'));
     } finally {
       setBusyId(null);
     }
@@ -120,18 +93,21 @@ export function EarlyAccessDesk() {
     }
   }
 
-  const counts = page?.counts ?? { pending: 0, granted: 0 };
+  const { rows, counts, total, loadingMore } = list;
+  // Rows from another filter are never shown; a reload of this list keeps its rows up.
+  const loading = list.key !== key || (list.loading && rows.length === 0);
+  const error = grantError || list.error;
   const label: Record<Filter, string> = {
     pending: `Pending ${counts.pending}`,
     granted: `Granted ${counts.granted}`,
     all: `All ${counts.pending + counts.granted}`,
   };
-  const more = page ? rows.length < page.total : false;
+  const more = list.key === key && hasMore(list);
 
   return (
-    <div className="min-h-0 desk-scroll overflow-y-auto p-4 sm:p-6 md:p-10">
+    <main aria-labelledby="early-access-desk-title" className="min-h-0 desk-scroll overflow-y-auto p-4 sm:p-6 md:p-10">
       <div className="max-w-5xl">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Google Play early access</h1>
+        <h1 id="early-access-desk-title" className="text-2xl md:text-3xl font-bold mb-2">Google Play early access</h1>
         <p className="text-sm text-[#8a8a8a] mb-6 max-w-2xl">
           Add the email to the Play tester group first, then press Granted. Granted emails them the
           Google Play opt-in link.
@@ -203,7 +179,7 @@ export function EarlyAccessDesk() {
                   </td>
                   <td className="col-start-1 text-[#cfcfcf] md:py-4 md:pr-4">
                     <span className="md:hidden text-[#8a8a8a]">Source: </span>
-                    {row.source ?? <span className="text-[#5a5a5a]">direct</span>}
+                    {row.source ?? <span className="text-[#a3a3a3]">direct</span>}
                   </td>
                   <td className="col-start-1 md:py-4 md:pr-4">
                     <span
@@ -231,7 +207,7 @@ export function EarlyAccessDesk() {
                         {busyId === row.id ? 'Granting…' : 'Granted'}
                       </button>
                     ) : (
-                      <span className="text-[#5a5a5a] text-xs">Invite sent</span>
+                      <span className="text-[#a3a3a3] text-xs">Invite sent</span>
                     )}
                   </td>
                 </tr>
@@ -247,10 +223,10 @@ export function EarlyAccessDesk() {
             disabled={loadingMore}
             className="mt-6 px-6 py-3 border border-[#262626] text-[#f4f4f4] hover:border-[#FFDE58] disabled:opacity-50"
           >
-            {loadingMore ? 'Loading…' : `Show ${Math.min(EARLY_ACCESS_PAGE_SIZE, (page?.total ?? 0) - rows.length)} more`}
+            {loadingMore ? 'Loading…' : `Show ${Math.min(EARLY_ACCESS_PAGE_SIZE, total - rows.length)} more`}
           </button>
         ) : null}
       </div>
-    </div>
+    </main>
   );
 }
