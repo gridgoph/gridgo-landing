@@ -107,7 +107,7 @@ export function signUpErrorMessage(status: number, code: string | undefined): st
   if (code === 'invalid_email' || code === 'email_invalid' || status === 400) {
     return 'Enter the full email you use on Google Play, like name@gmail.com.';
   }
-  if (status === 429) return 'Too many tries from this connection. Wait a minute, then try again.';
+  if (status === 429) return 'Too many sign-ups from this connection. Try again in an hour.';
   return 'Sign-up is not working right now. Try again in a few minutes.';
 }
 

@@ -64,7 +64,7 @@ assert.equal(logic.parseStored('{"token":"t","createdAt":"2026-11-17T10:00:00.00
 assert.equal(logic.parseStored('not json'), null);
 assert.equal(logic.parseStored('{"createdAt":"x"}'), null);
 assert.match(logic.signUpErrorMessage(400, 'consent_required'), /agree/);
-assert.match(logic.signUpErrorMessage(429, 'rate_limited'), /Wait a minute/);
+assert.match(logic.signUpErrorMessage(429, 'rate_limited'), /in an hour/);
 
 // ── Home: top bar and hero ────────────────────────────────────────────────
 const topBar = app.slice(app.indexOf('{/* Right Nav */}'), app.indexOf('{/* Dark Mode Toggle */}'));
