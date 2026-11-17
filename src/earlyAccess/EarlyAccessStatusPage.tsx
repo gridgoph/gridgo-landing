@@ -132,27 +132,26 @@ export function EarlyAccessStatusPage() {
           </div>
         ) : shown.state === 'missing' ? (
           <Missing />
-        ) : granted ? (
-          <Granted optInUrl={shown.result.optInUrl} />
         ) : (
-          <Waiting createdAt={createdAt} now={now} duplicate={duplicate} stale={shown.stale} />
+          <>
+            {duplicate ? (
+              <p className="mb-8 w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] px-5 py-3 text-center text-sm text-gray-700 dark:text-gray-300">
+                This email already asked for access. Here is where it stands.
+              </p>
+            ) : null}
+            {granted ? (
+              <Granted optInUrl={shown.result.optInUrl} />
+            ) : (
+              <Waiting createdAt={createdAt} now={now} stale={shown.stale} />
+            )}
+          </>
         )}
       </main>
     </div>
   );
 }
 
-function Waiting({
-  createdAt,
-  now,
-  duplicate,
-  stale,
-}: {
-  createdAt: string;
-  now: number;
-  duplicate: boolean;
-  stale: boolean;
-}) {
+function Waiting({ createdAt, now, stale }: { createdAt: string; now: number; stale: boolean }) {
   const { remaining, showSpamHint } = waitingPhase(createdAt, now);
   const lit = litDots(remaining, 'pending');
 
@@ -163,12 +162,6 @@ function Waiting({
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="flex flex-col items-center text-center"
     >
-      {duplicate ? (
-        <p className="mb-8 w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] px-5 py-3 text-sm text-gray-700 dark:text-gray-300">
-          This email already asked for access. Here is where it stands.
-        </p>
-      ) : null}
-
       <GridDots lit={lit} size={22} />
 
       <h1 className="mt-10 text-3xl md:text-4xl font-bold tracking-tight" aria-live="polite">
