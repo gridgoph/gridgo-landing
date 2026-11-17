@@ -36,6 +36,7 @@ const RETENTION: [string, string][] = [
   ['ID and verification documents, and the details in a shop, rider, business or organization application', 'While the account is open, then 1 year after it is closed or the application is turned down'],
   ['Files uploaded but never attached to anything', '24 hours'],
   ['Support chat messages, support tickets and problem reports', '1 year after the conversation or report is closed'],
+  ['Google Play early-access sign-ups: the email address, when you agreed and the link tag', 'Until the Google Play test ends, or sooner if you ask us to remove it'],
   ['Order chat between a customer or print shop and the rider, with its photos, and the record of in-app calls about the delivery', 'Deleted about one day after the delivery is recorded'],
   ['Order chat between a customer and the print shop, with its attachments', 'Kept with the order’s records, to settle questions about what was agreed'],
   ['Security and audit records of actions taken on an account', '1 year after the account is closed'],
@@ -215,6 +216,7 @@ const sections: LegalSection[] = [
           <li><strong>“Report a problem”</strong> in the GRIDGO and Supplier apps sends your description to support chat, together with the app version, your phone’s make and model and its operating system version (Android or iOS), and any screenshots you attach, so we can find the fault.</li>
           <li>The <strong>support form</strong> on this website takes your name, email address, subject and message. We answer by email.</li>
           <li>The <strong>problem report form</strong> on this website takes your description, a category and up to six screenshots. It does not ask who you are. Our team publishes a short summary of each report on GRIDGO’s public reports page, so please leave personal details out of the text and screenshots.</li>
+          <li>The <strong>Google Play early-access form</strong> on this website takes the email address of the Google account you use on Google Play, the time you agreed, and, if you came from a link such as one at an event, a short tag for that link. We use the address to add you to the GRIDGO app’s Google Play test, which gives it to Google, and to email you the invite. Your browser keeps a private link to your sign-up so it can show you its status.</li>
         </ul>
 
         <h3>Notifications</h3>
@@ -300,7 +302,7 @@ const sections: LegalSection[] = [
             <p>To connect an in-app call, the two phones exchange network addresses, using Google’s public STUN service and, when a direct connection is not possible, a relay server. They do not receive your name or account.</p>
           </Fact>
           <Fact label="Email: Google (Gmail)">
-            <p>Your email address and the message, when we answer a support ticket or send an organization’s confirmation code.</p>
+            <p>Your email address and the message, when we answer a support ticket, send an organization’s confirmation code or send your Google Play early-access invite.</p>
           </Fact>
           <Fact label="Network and security: Cloudflare">
             <p>All traffic to our website and server passes through Cloudflare, which protects it and delivers it quickly.</p>

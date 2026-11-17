@@ -4,14 +4,18 @@
 
 :root {
   --app-primary: #D4A000; /* Darker yellow for light mode readability */
+  /* Brand-coloured text on white needs more than #D4A000 gives (2.4:1). */
+  --app-primary-text: #7A5C00;
 }
 
 .dark {
   --app-primary: #FFDE58; /* Original yellow for dark mode */
+  --app-primary-text: #FFDE58;
 }
 
 @theme {
   --color-primary: var(--app-primary);
+  --color-primary-text: var(--app-primary-text);
   --font-sans: "Montserrat", sans-serif;
   --font-heading: "Evolve Sans", sans-serif;
 }

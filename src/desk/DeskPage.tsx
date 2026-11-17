@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ClerkProvider, SignIn, useAuth, useClerk } from '@clerk/react';
+import { useSearchParams } from 'react-router-dom';
 import { Mark } from './Mark';
+import { EarlyAccessDesk } from './EarlyAccessDesk';
 import {
   checkDeskAccess,
   deleteTicket,
@@ -162,7 +164,54 @@ function LoginScreen() {
   );
 }
 
+type View = 'tickets' | 'early-access';
+
+/** Two queues behind one sign-in. `?view=early-access` links straight to sign-ups. */
 function Desk({ username, onSignOut }: { username: string; onSignOut: () => void }) {
+  const [params, setParams] = useSearchParams();
+  const view: View = params.get('view') === 'early-access' ? 'early-access' : 'tickets';
+
+  return (
+    <div className="min-h-screen grid grid-rows-[auto_auto_1fr] bg-[#070707] text-[#f4f4f4]">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-6 py-4 border-b border-[#262626]">
+        <div className="flex items-center gap-3">
+          <Mark size={18} />
+          <div>
+            <p className="font-extrabold tracking-[0.22em] text-sm">GRIDGO</p>
+            <p className="text-[10px] uppercase tracking-[0.28em] text-[#8a8a8a]">Support desk</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm min-w-0">
+          <p className="min-w-0 break-all">{username}</p>
+          <button type="button" onClick={onSignOut} className="text-[#FFDE58]">
+            Sign out
+          </button>
+        </div>
+      </header>
+      <nav className="flex gap-6 px-6 border-b border-[#262626] text-sm" aria-label="Desk">
+        {([
+          ['tickets', 'Tickets'],
+          ['early-access', 'Early access'],
+        ] as [View, string][]).map(([key, text]) => (
+          <button
+            key={key}
+            type="button"
+            aria-current={view === key ? 'page' : undefined}
+            onClick={() => setParams(key === 'tickets' ? {} : { view: key }, { replace: true })}
+            className={`py-3 -mb-px border-b-2 font-semibold ${
+              view === key ? 'border-[#FFDE58] text-[#f4f4f4]' : 'border-transparent text-[#8a8a8a] hover:text-[#f4f4f4]'
+            }`}
+          >
+            {text}
+          </button>
+        ))}
+      </nav>
+      {view === 'tickets' ? <TicketsDesk /> : <EarlyAccessDesk />}
+    </div>
+  );
+}
+
+function TicketsDesk() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [filter, setFilter] = useState<Filter>('open');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -198,26 +247,6 @@ function Desk({ username, onSignOut }: { username: string; onSignOut: () => void
   const openCount = tickets.filter((ticket) => ticket.status === 'open').length;
 
   return (
-    <div className="min-h-screen grid grid-rows-[auto_1fr] bg-[#070707] text-[#f4f4f4]">
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-6 py-4 border-b border-[#262626]">
-        <div className="flex items-center gap-3">
-          <Mark size={18} />
-          <div>
-            <p className="font-extrabold tracking-[0.22em] text-sm">GRIDGO</p>
-            <p className="text-[10px] uppercase tracking-[0.28em] text-[#8a8a8a]">Ticketing desk</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm min-w-0">
-          <p className="text-[#8a8a8a] whitespace-nowrap">
-            {openCount} open
-          </p>
-          <p className="min-w-0 break-all">{username}</p>
-          <button type="button" onClick={onSignOut} className="text-[#FFDE58]">
-            Sign out
-          </button>
-        </div>
-      </header>
-
       <div className="grid lg:grid-cols-[minmax(280px,360px)_1fr] min-h-0">
         <aside className="border-b lg:border-b-0 lg:border-r border-[#262626] min-h-0 flex flex-col">
           <div className="flex gap-1 p-3 border-b border-[#262626] text-xs uppercase tracking-[0.18em]">
@@ -228,7 +257,7 @@ function Desk({ username, onSignOut }: { username: string; onSignOut: () => void
                 onClick={() => setFilter(key)}
                 className={`px-3 py-2 ${filter === key ? 'text-black bg-[#FFDE58]' : 'text-[#8a8a8a]'}`}
               >
-                {key}
+                {key === 'open' ? `open ${openCount}` : key}
               </button>
             ))}
           </div>
@@ -287,7 +316,6 @@ function Desk({ username, onSignOut }: { username: string; onSignOut: () => void
           )}
         </main>
       </div>
-    </div>
   );
 }
 
