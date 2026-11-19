@@ -23,7 +23,8 @@ import {
 import type { ApkRelease } from './utils/apkReleases';
 import { useTheme } from './utils/useTheme';
 import { EarlyAccessForm } from './earlyAccess/EarlyAccessForm';
-import { EARLY_ACCESS_NOTE } from './earlyAccess/logic';
+import { AndroidGlyph, AppleGlyph } from './earlyAccess/PhoneChoice';
+import { DEFAULT_PLATFORM, EARLY_ACCESS_NOTE, SIGN_UP_STEPS, type Platform } from './earlyAccess/logic';
 
 function GooglePlayGlyph({ className }: { className?: string }) {
   return (
@@ -278,8 +279,9 @@ function InstallChoices() {
         href="#early-access"
         className="group relative flex items-start gap-5 rounded-3xl border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/[0.07] p-6 md:p-8 transition hover:bg-[var(--color-primary)]/[0.12] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)]"
       >
-        <span className="shrink-0 size-12 rounded-2xl bg-[var(--color-primary)] text-black flex items-center justify-center">
-          <GooglePlayGlyph className="w-6 h-6" />
+        <span className="shrink-0 size-12 rounded-2xl bg-[var(--color-primary)] text-black flex items-center justify-center gap-0.5">
+          <AndroidGlyph className="size-[18px]" />
+          <AppleGlyph className="size-[17px]" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -288,9 +290,9 @@ function InstallChoices() {
               Recommended
             </span>
           </span>
-          <span className="block text-xl font-bold leading-snug">Google Play Early Access</span>
+          <span className="block text-xl font-bold leading-snug">Early Access</span>
           <span className="block mt-1.5 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            Install from Google Play. Updates arrive on their own.
+            Android or iPhone. Updates arrive on their own.
           </span>
         </span>
         <ArrowDown
@@ -324,14 +326,8 @@ function InstallChoices() {
   );
 }
 
-/** What happens after the button, shown beside the form where there is room. */
-const EARLY_ACCESS_STEPS = [
-  'Enter the email you use on Google Play.',
-  'We add you to the tester group and email your invite.',
-  'Open the invite and install GRIDGO from Google Play.',
-];
-
 function EarlyAccessSection() {
+  const [platform, setPlatform] = useState<Platform>(DEFAULT_PLATFORM);
   return (
     <section id="early-access" className="scroll-mt-8 pt-20 md:pt-28">
       <div className="relative overflow-hidden rounded-3xl border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/[0.05] p-6 sm:p-8 md:p-14">
@@ -341,12 +337,13 @@ function EarlyAccessSection() {
             <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary-text)] mb-3 font-bold">
               Option 1
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">Google Play Early Access</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">Early Access</h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
               For the GRIDGO customer app. {EARLY_ACCESS_NOTE}
             </p>
+            {/* Steps beside the form follow the phone chosen in it. */}
             <ol className="hidden md:flex flex-col gap-5 mt-10">
-              {EARLY_ACCESS_STEPS.map((step, i) => (
+              {SIGN_UP_STEPS[platform].map((step, i) => (
                 <li key={step} className="flex items-start gap-4">
                   <span className="shrink-0 w-8 h-8 rounded-full border border-[var(--color-primary)]/50 bg-[var(--color-primary)]/10 text-[var(--color-primary-text)] font-mono text-[13px] font-bold flex items-center justify-center">
                     {i + 1}
@@ -356,7 +353,7 @@ function EarlyAccessSection() {
               ))}
             </ol>
           </div>
-          <EarlyAccessForm />
+          <EarlyAccessForm platform={platform} onPlatformChange={setPlatform} />
         </div>
       </div>
     </section>

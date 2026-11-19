@@ -1,7 +1,8 @@
 /**
- * Google Play early access (gridgoph/gridgo-web#319): home buttons, the
- * /download split with the sign-up form, the waiting page and the desk list.
- * The API half is gridgo-api docs/EARLY_ACCESS_API.md.
+ * Early access (gridgoph/gridgo-web#319, iPhone in #325): home buttons, the
+ * /download split with the sign-up form and its Android/iPhone choice, the
+ * waiting page and the desk list. The API half is gridgo-api
+ * docs/EARLY_ACCESS_API.md.
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -22,6 +23,8 @@ const deskApi = read('../src/desk/api.ts');
 const desk = read('../src/desk/DeskPage.tsx');
 const earlyDesk = read('../src/desk/EarlyAccessDesk.tsx');
 const privacy = read('../src/legal/PrivacyPage.tsx');
+const phoneChoice = read('../src/earlyAccess/PhoneChoice.tsx');
+const testFlightBox = read('../src/earlyAccess/TestFlightBox.tsx');
 
 // ── The pure logic, imported directly (Node strips the types) ─────────────
 const logic = await import('../src/earlyAccess/logic.ts');
@@ -72,18 +75,22 @@ assert(
   topBar.indexOf('Get Early Access') > -1 && topBar.indexOf('Get Early Access') < topBar.indexOf('>\n            Download'),
   'The top bar shows Get Early Access to the left of Download.',
 );
-assert(app.includes('Get Early Access on Google Play'), 'The hero has the yellow Google Play button.');
+const hero = app.slice(app.indexOf('function HeroSection('), app.indexOf('{EARLY_ACCESS_NOTE}'));
+assert(/>\s*Get Early Access\s*</.test(hero), 'The hero has the yellow Get Early Access button.');
+assert(hero.indexOf('Get Early Access') > hero.indexOf('Design. Tap.'), 'The hero buttons sit under "Design. Tap. Print."');
 assert(app.includes('Direct download (APK)'), 'The hero has the outlined APK button.');
-assert(
-  app.indexOf('Get Early Access on Google Play') > app.indexOf('Design. Tap.'),
-  'The hero buttons sit under "Design. Tap. Print."',
-);
+// #325: Early access is for Android and iPhone, so no button or heading names one store.
+for (const [file, text] of [['App.tsx', app], ['DownloadPage.tsx', download], ['EarlyAccessStatusPage.tsx', status]]) {
+  assert(!/on Google Play/.test(text), `${file}: no button or heading says "on Google Play".`);
+  assert(!/Google Play Early Access/.test(text), `${file}: the early-access heading names no store.`);
+}
 assert(app.includes('{EARLY_ACCESS_NOTE}'), 'The hero says access is open, takes about 5 minutes and is free.');
 assert(app.includes('to="/download#early-access"') && app.includes('to="/download#apk"'));
 
 // ── /download ─────────────────────────────────────────────────────────────
 assert(download.includes('Two ways to install. Pick the one that fits you.'));
-assert(download.includes('Google Play Early Access') && download.includes('Recommended'));
+assert(download.includes('>Early Access</h2>') && download.includes('Recommended'));
+assert(download.includes('Android or iPhone.'), 'The Option 1 card says it is for both phones.');
 assert(download.includes('Direct Download (APK)'));
 assert(download.includes('id="early-access"') && download.includes('id="apk"'));
 assert(download.includes('Android only, install now'), 'Each APK card is tagged Android only.');
@@ -98,7 +105,56 @@ assert(form.includes('type="email"') && form.includes('type="checkbox"'));
 assert(form.includes('disabled={!consent || busy}'), 'Get Early Access stays disabled until consent.');
 assert(form.includes('to="/privacy"'), 'The consent links to the existing Privacy Policy.');
 assert(form.includes('currentSource(search)'), '?src= reaches the sign-up.');
-assert(api.includes("consent: true") && api.includes("platform: 'android'"));
+assert(api.includes('JSON.stringify(signUpBody(input))'), 'The form posts the pinned body.');
+
+// ── #325: the phone choice and the request body ──────────────────────────
+assert.equal(logic.DEFAULT_PLATFORM, 'android', 'Android is chosen until the visitor picks iPhone.');
+assert.equal(logic.parsePlatform('iphone'), 'iphone');
+assert.equal(logic.parsePlatform(undefined), 'android', 'An API that predates iPhone means Android.');
+assert.equal(logic.parsePlatform('IPHONE'), 'android', 'Only the exact API value counts.');
+assert.deepEqual(
+  logic.signUpBody({ email: ' Jo@iCloud.com ', source: 'booth', platform: 'iphone' }),
+  { email: 'jo@icloud.com', consent: true, platform: 'iphone', source: 'booth' },
+  'iPhone sign-ups post platform "iphone" with the Apple ID email.',
+);
+assert.deepEqual(
+  logic.signUpBody({ email: 'jo@gmail.com', source: null, platform: 'android' }),
+  { email: 'jo@gmail.com', consent: true, platform: 'android' },
+  'Android posts platform "android" (accepted by every API release) and no empty source.',
+);
+assert.equal(logic.FORM_COPY.android.label, 'Google Play email');
+assert.equal(logic.FORM_COPY.iphone.label, 'Apple ID email');
+assert.match(logic.FORM_COPY.iphone.placeholder, /icloud/);
+assert.match(logic.FORM_COPY.iphone.consent, /TestFlight/);
+assert(!/Google/.test(JSON.stringify(logic.FORM_COPY.iphone)), 'Nothing on the iPhone form mentions Google.');
+assert.equal(logic.SIGN_UP_STEPS.android.length, 3, 'Android keeps its three steps.');
+assert.equal(logic.SIGN_UP_STEPS.iphone.length, 4, 'iPhone has four steps.');
+assert.match(logic.SIGN_UP_STEPS.iphone[0], /Install TestFlight/, 'Installing TestFlight is the first iPhone step.');
+assert.match(logic.SIGN_UP_STEPS.iphone[1], /Apple ID/);
+assert.match(logic.SIGN_UP_STEPS.iphone[2], /5 minutes/);
+assert.match(logic.SIGN_UP_STEPS.iphone[3], /Open the invite/);
+assert(!/Google/.test(logic.WAITING_STEPS.iphone.join()), 'The iPhone waiting steps never mention Google.');
+assert.match(logic.signUpErrorMessage(400, 'invalid_email', 'iphone'), /Apple ID/);
+assert.match(logic.signUpErrorMessage(400, 'invalid_email', 'android'), /Google Play/);
+assert.match(logic.signUpErrorMessage(400, 'invalid_platform', 'iphone'), /iPhone sign-up is not open yet/);
+assert.equal(logic.parseStored('{"token":"t","createdAt":"2026-11-17T10:00:00.000Z"}')?.platform, 'android', 'A token stored before #325 is Android.');
+assert.equal(logic.parseStored('{"token":"t","createdAt":"2026-11-17T10:00:00.000Z","platform":"iphone"}')?.platform, 'iphone');
+
+assert(form.includes('<PhoneChoice') && form.indexOf('<PhoneChoice') < form.indexOf('type="email"'), 'The phone choice sits above the email field.');
+assert(/platform === 'iphone' \? \([\s\S]*?<TestFlightBox \/>/.test(form), 'The TestFlight box shows for iPhone only.');
+for (const field of ['copy.label', 'copy.placeholder', 'copy.hint', 'copy.consent']) {
+  assert(form.includes(`{${field}}`), `The form's ${field} follows the phone.`);
+}
+assert(form.includes('signUp({ email, source: currentSource(search), platform })'), 'The chosen phone reaches the sign-up.');
+assert(phoneChoice.includes('type="radio"') && phoneChoice.includes('<fieldset'), 'The phone choice is a labelled radio group.');
+assert(download.includes('SIGN_UP_STEPS[platform]'), 'The steps beside the form follow the phone.');
+assert(download.includes('<EarlyAccessForm platform={platform} onPlatformChange={setPlatform} />'));
+assert.equal(logic.TESTFLIGHT_URL, 'https://apps.apple.com/ph/app/testflight/id899247664');
+assert(testFlightBox.includes('href={TESTFLIGHT_URL}') && testFlightBox.includes('target="_blank"') && testFlightBox.includes('rel="noopener noreferrer"'), 'Get TestFlight opens the App Store in a new tab.');
+assert(testFlightBox.includes('Get TestFlight') && testFlightBox.includes("Apple's review") && testFlightBox.includes("Apple's official app"));
+assert(/hidden md:pointer-fine:flex/.test(testFlightBox), 'The QR shows only on a desktop (wide screen with a mouse).');
+const qr = await import('../src/earlyAccess/testflightQr.ts');
+assert.equal(qr.TESTFLIGHT_QR_SOURCE, logic.TESTFLIGHT_URL, 'The QR was drawn from the TestFlight link.');
 assert(api.includes('`${apiBaseUrl}/early-access`'), 'Sign-up posts to the API origin.');
 assert(routeTable.includes('<SourceCapture />'), '?src= is remembered from whichever page the visitor lands on.');
 
@@ -108,9 +164,7 @@ assert(routeTable.includes('<Route path="/early-access" element={<EarlyAccessRed
 assert(/EarlyAccessStatusRoute\s*=\s*lazy\(/.test(routes));
 for (const text of [
   'Setting up your access…',
-  'Request received',
-  'Adding you to the tester group',
-  'Sending your Google Play invite',
+  'WAITING_STEPS[platform]',
   "You're in",
   'Your invite is in your inbox.',
   'Open Google Play',
@@ -118,9 +172,15 @@ for (const text of [
   'Spam',
   'to="/download#apk"',
   'You can close this page.',
+  'Your invite comes by email from TestFlight.',
 ]) {
   assert(status.includes(text), `The waiting page should say: ${text}`);
 }
+assert(/iphone \? \([\s\S]*?Your TestFlight invite arrives by email in about 5 minutes\.[\s\S]*?<TestFlightBox/.test(status), 'iPhone waiting says the invite takes about 5 minutes and shows TestFlight first.');
+assert(/function GrantedIphone[\s\S]*?about 5 minutes[\s\S]*?<TestFlightBox/.test(status), 'iPhone success points to the TestFlight invite.');
+assert(!/function GrantedIphone[\s\S]*?Keep the app for 14 days/.test(status.slice(status.indexOf('function GrantedIphone'), status.indexOf('function Missing'))), 'The 14-day rule is Google Play only.');
+assert(/iphone \? \([\s\S]*?Spam folder[\s\S]*?\) : \([\s\S]*?to="\/download#apk"/.test(status), 'At 15 minutes iPhone gets no APK fallback.');
+assert(status.includes('result.platform ??'), 'The API-reported phone wins over the stored one.');
 assert(status.includes("'no-referrer'"), 'The token in the address is never sent on as a referrer.');
 assert(status.includes('rel="noopener noreferrer"'));
 assert(/localStorage/.test(api) && /try \{[\s\S]*?localStorage/.test(api), 'Token storage is guarded.');
@@ -210,6 +270,6 @@ for (const label of ['Option 1', 'Option 2']) {
 assert(!/text-gray-500 dark:text-gray-500/.test(status), 'Waiting steps reach 4.5:1 in dark mode.');
 
 // ── Privacy ───────────────────────────────────────────────────────────────
-assert(privacy.includes('Google Play early-access form'), 'The privacy policy names the new form.');
+assert(privacy.includes('early-access form') && privacy.includes('Apple ID') && privacy.includes('TestFlight'), 'The privacy policy covers the iPhone sign-up.');
 
 console.log('Early access: home, /download, waiting page, desk and privacy: passed');
