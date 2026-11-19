@@ -190,7 +190,30 @@ assert(!/email/i.test(api.slice(api.indexOf('export function storeSignUp'))), 'T
 assert(deskApi.includes('/early-access/desk?'), 'The desk lists sign-ups from /early-access/desk.');
 assert(deskApi.includes('/early-access/desk/${encodeURIComponent(id)}/grant'));
 assert(desk.includes('<EarlyAccessDesk />'), 'Early access lives inside the existing desk gate.');
-assert(earlyDesk.includes("'Granted'") || earlyDesk.includes('Granted'), 'Each pending row has a Granted button.');
+const phoneMark = read('../src/desk/PhoneMark.tsx');
+{
+  const D = await import('../src/desk/earlyAccessList.ts');
+  assert.equal(D.phoneOf({ platform: 'iphone' }), 'iphone');
+  assert.equal(D.phoneOf({ platform: 'android' }), 'android');
+  assert.equal(D.phoneOf({}), 'android', 'A row without a platform is Android.');
+  assert.equal(D.phoneOf({ platform: null }), 'android');
+  assert.equal(D.PHONE_COPY.android.label, 'Android');
+  assert.equal(D.PHONE_COPY.iphone.label, 'iPhone');
+  assert.equal(D.PHONE_COPY.android.action, 'Grant', 'Android keeps Grant (GRIDGO emails the Play invite).');
+  assert.equal(D.PHONE_COPY.iphone.action, 'Mark added', 'iPhone says what staff do: mark the tester added.');
+  assert.match(D.PHONE_COPY.iphone.reminder, /Apple ID[\s\S]*App Store Connect/, 'iPhone reminds staff to add the Apple ID first.');
+  assert.equal(D.PHONE_COPY.android.reminder, null);
+  assert.doesNotMatch(D.PHONE_COPY.iphone.notice('a@b.c'), /Google Play/, 'An iPhone grant never claims a Play invite.');
+  assert.equal(D.statusLabel({ platform: 'iphone', status: 'granted' }), 'added', 'A granted iPhone reads added.');
+  assert.equal(D.statusLabel({ platform: 'android', status: 'granted' }), 'granted');
+  assert.equal(D.statusLabel({ platform: 'iphone', status: 'pending' }), 'pending');
+}
+assert(/<th[^>]*>Phone<\/th>/.test(earlyDesk), 'The desk table has a Phone column.');
+assert(/md:hidden[^>]*>Phone:</.test(earlyDesk), 'On a phone each row has a labelled Phone line.');
+assert(earlyDesk.includes('<PhoneMark phone={phone}'), 'Every row shows the phone mark.');
+assert(earlyDesk.includes('{statusLabel(row)}'), 'Status comes from statusLabel (added for iPhone).');
+assert(earlyDesk.includes('phoneCopy.action') && earlyDesk.includes('phoneCopy.reminder'), 'The action and reminder follow the phone.');
+assert(phoneMark.includes('aria-hidden="true"'), 'The mark is decorative; the label carries the meaning.');
 assert(earlyDesk.includes('row.source') && earlyDesk.includes('row.createdAt'));
 
 // ── Desk list races (review of PR #45, F1 and F2) ───────────────────────────

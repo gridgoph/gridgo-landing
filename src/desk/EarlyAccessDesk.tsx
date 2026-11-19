@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { EARLY_ACCESS_PAGE_SIZE, grantEarlyAccess, listEarlyAccess, type EarlyAccessSignup } from './api';
-import { hasMore, initialList, listKey, listReducer } from './earlyAccessList';
+import { PHONE_COPY, hasMore, initialList, listKey, listReducer, phoneOf, statusLabel } from './earlyAccessList';
+import { PhoneMark } from './PhoneMark';
 
 type Filter = 'pending' | 'granted' | 'all';
 
@@ -16,8 +17,9 @@ function message(caught: unknown, fallback: string): string {
 }
 
 /**
- * Google Play early-access sign-ups. The order of work is: add the email to the
- * Play tester group, then press Granted, which emails the person the opt-in link.
+ * Early-access sign-ups for both phones. Android: add the email to the Play
+ * tester group, then Grant, which emails the opt-in link. iPhone: add the Apple
+ * ID to TestFlight in App Store Connect, then Mark added; Apple sends the invite.
  */
 export function EarlyAccessDesk() {
   const [filter, setFilter] = useState<Filter>('pending');
@@ -76,7 +78,7 @@ export function EarlyAccessDesk() {
       // The grant moved this person out of Pending, so offsets into the old
       // list no longer line up with the server's. Fetch it again from the top.
       setReloads((count) => count + 1);
-      setNotice(`Granted. The Google Play invite is on its way to ${updated.email}.`);
+      setNotice(PHONE_COPY[phoneOf(updated)].notice(updated.email));
     } catch (caught) {
       setGrantError(message(caught, 'Could not grant access.'));
     } finally {
@@ -107,11 +109,17 @@ export function EarlyAccessDesk() {
   return (
     <main aria-labelledby="early-access-desk-title" className="min-h-0 desk-scroll overflow-y-auto p-4 sm:p-6 md:p-10">
       <div className="max-w-5xl">
-        <h1 id="early-access-desk-title" className="text-2xl md:text-3xl font-bold mb-2">Google Play early access</h1>
-        <p className="text-sm text-[#8a8a8a] mb-6 max-w-2xl">
-          Add the email to the Play tester group first, then press Granted. Granted emails them the
-          Google Play opt-in link.
-        </p>
+        <h1 id="early-access-desk-title" className="text-2xl md:text-3xl font-bold mb-2">Early access</h1>
+        <ul className="text-sm text-[#a3a3a3] mb-6 max-w-2xl space-y-1">
+          <li className="flex items-center gap-2">
+            <PhoneMark phone="android" />
+            <span>Add the email to the Play tester group, then Grant. GRIDGO emails the Play invite.</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <PhoneMark phone="iphone" />
+            <span>Add the Apple ID to TestFlight in App Store Connect, then Mark added. Apple emails the invite.</span>
+          </li>
+        </ul>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
           <div className="flex gap-1 text-xs uppercase tracking-[0.18em]" role="tablist" aria-label="Status">
@@ -153,6 +161,7 @@ export function EarlyAccessDesk() {
             <thead className="hidden md:table-header-group">
               <tr className="text-left text-[10px] uppercase tracking-[0.2em] text-[#8a8a8a]">
                 <th className="py-3 pr-4 font-normal">Email</th>
+                <th className="py-3 pr-4 font-normal">Phone</th>
                 <th className="py-3 pr-4 font-normal">Source</th>
                 <th className="py-3 pr-4 font-normal">Status</th>
                 <th className="py-3 pr-4 font-normal">Signed up</th>
@@ -160,7 +169,10 @@ export function EarlyAccessDesk() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
+              {rows.map((row) => {
+                const phone = phoneOf(row);
+                const phoneCopy = PHONE_COPY[phone];
+                return (
                 <tr
                   key={row.id}
                   className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 py-4 md:table-row md:py-0 border-b border-[#1c1c1c]"
@@ -177,6 +189,13 @@ export function EarlyAccessDesk() {
                       </button>
                     </span>
                   </td>
+                  <td className="col-start-1 text-[#cfcfcf] md:py-4 md:pr-4 whitespace-nowrap">
+                    <span className="flex items-center gap-1.5">
+                      <span className="md:hidden text-[#8a8a8a]">Phone:</span>
+                      <PhoneMark phone={phone} className="text-[#f4f4f4]" />
+                      {phoneCopy.label}
+                    </span>
+                  </td>
                   <td className="col-start-1 text-[#cfcfcf] md:py-4 md:pr-4">
                     <span className="md:hidden text-[#8a8a8a]">Source: </span>
                     {row.source ?? <span className="text-[#a3a3a3]">direct</span>}
@@ -187,7 +206,7 @@ export function EarlyAccessDesk() {
                         row.status === 'pending' ? 'text-[#FFDE58]' : 'text-[#8a8a8a]'
                       }`}
                     >
-                      {row.status}
+                      {statusLabel(row)}
                     </span>
                     {row.status === 'granted' && row.grantedAt ? (
                       <span className="block text-[11px] text-[#8a8a8a]">{formatDate(row.grantedAt)}</span>
@@ -196,22 +215,31 @@ export function EarlyAccessDesk() {
                   <td className="col-start-1 text-[#8a8a8a] md:py-4 md:pr-4 whitespace-nowrap">
                     {formatDate(row.createdAt)}
                   </td>
-                  <td className="col-start-2 row-start-1 row-span-4 self-center md:py-4 text-right">
+                  <td className="col-start-2 row-start-1 row-span-5 self-center md:py-4 text-right">
                     {row.status === 'pending' ? (
-                      <button
-                        type="button"
-                        onClick={() => grant(row)}
-                        disabled={busyId === row.id}
-                        className="px-5 py-2.5 bg-[#FFDE58] text-black font-bold whitespace-nowrap disabled:opacity-50"
-                      >
-                        {busyId === row.id ? 'Granting…' : 'Granted'}
-                      </button>
+                      <span className="inline-flex flex-col items-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => grant(row)}
+                          disabled={busyId === row.id}
+                          aria-describedby={phoneCopy.reminder ? `reminder-${row.id}` : undefined}
+                          className="px-5 py-2.5 bg-[#FFDE58] text-black font-bold whitespace-nowrap disabled:opacity-50"
+                        >
+                          {busyId === row.id ? phoneCopy.busy : phoneCopy.action}
+                        </button>
+                        {phoneCopy.reminder ? (
+                          <span id={`reminder-${row.id}`} className="text-[11px] leading-snug text-[#a3a3a3] max-w-[8rem] md:max-w-[11rem]">
+                            {phoneCopy.reminder}
+                          </span>
+                        ) : null}
+                      </span>
                     ) : (
-                      <span className="text-[#a3a3a3] text-xs">Invite sent</span>
+                      <span className="text-[#a3a3a3] text-xs">{phoneCopy.doneNote}</span>
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
