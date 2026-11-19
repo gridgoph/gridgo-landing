@@ -1,18 +1,22 @@
 import { apiBaseUrl } from '../utils/apiBase';
 import {
-  normalizeEmail,
+  parsePlatform,
   parseStored,
   safeOptInUrl,
   signUpErrorMessage,
   SOURCE_KEY,
   STORAGE_KEY,
   sanitizeSource,
+  signUpBody,
   type EarlyAccessStatus,
+  type Platform,
   type StoredSignUp,
 } from './logic';
 
 export type SignUpResult = {
   token: string;
+  /** The stored phone: a repeat sign-up keeps the first one. */
+  platform: Platform;
   status: EarlyAccessStatus;
   createdAt: string;
   grantedAt: string | null;
@@ -20,6 +24,8 @@ export type SignUpResult = {
 };
 
 export type StatusResult = {
+  /** Absent from an API that predates iPhone sign-up; the stored phone stands in. */
+  platform?: Platform;
   status: EarlyAccessStatus;
   grantedAt: string | null;
   optInUrl: string | null;
@@ -42,18 +48,14 @@ function asStatus(value: unknown): EarlyAccessStatus {
 export async function signUp(input: {
   email: string;
   source: string | null;
+  platform: Platform;
 }): Promise<SignUpResult> {
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl}/early-access`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: normalizeEmail(input.email),
-        consent: true,
-        platform: 'android',
-        ...(input.source ? { source: input.source } : {}),
-      }),
+      body: JSON.stringify(signUpBody(input)),
     });
   } catch {
     throw new EarlyAccessError(
@@ -64,10 +66,11 @@ export async function signUp(input: {
   const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok || typeof body.token !== 'string' || !body.token) {
     const code = typeof body.error === 'string' ? body.error : typeof body.code === 'string' ? body.code : undefined;
-    throw new EarlyAccessError(signUpErrorMessage(response.status, code), response.status);
+    throw new EarlyAccessError(signUpErrorMessage(response.status, code, input.platform), response.status);
   }
   return {
     token: body.token,
+    platform: body.platform === undefined ? input.platform : parsePlatform(body.platform),
     status: asStatus(body.status),
     createdAt: typeof body.createdAt === 'string' ? body.createdAt : new Date().toISOString(),
     grantedAt: typeof body.grantedAt === 'string' ? body.grantedAt : null,
@@ -84,6 +87,7 @@ export async function fetchStatus(token: string): Promise<StatusResult> {
   const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
   if (!response.ok) throw new EarlyAccessError('status_failed', response.status);
   return {
+    ...(body.platform === undefined ? {} : { platform: parsePlatform(body.platform) }),
     status: asStatus(body.status),
     grantedAt: typeof body.grantedAt === 'string' ? body.grantedAt : null,
     optInUrl: safeOptInUrl(body.optInUrl),

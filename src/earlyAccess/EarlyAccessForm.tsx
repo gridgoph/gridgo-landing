@@ -1,14 +1,26 @@
 import { useId, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { currentSource, readSignUp, signUp, storeSignUp, forgetSignUp } from './api';
-import { looksLikeEmail, statusPath } from './logic';
+import { FORM_COPY, looksLikeEmail, statusPath, type Platform } from './logic';
+import { PhoneChoice } from './PhoneChoice';
+import { TestFlightBox } from './TestFlightBox';
 
 /**
- * The whole form is an email, one consent box and one button. Everything a
- * visitor needs to know afterwards is on the waiting page.
+ * The whole form is the phone, an email, one consent box and one button.
+ * The phone is the parent's, so the steps beside the form follow it too.
+ * Everything a visitor needs to know afterwards is on the waiting page.
  */
-export function EarlyAccessForm() {
+export function EarlyAccessForm({
+  platform,
+  onPlatformChange,
+}: {
+  platform: Platform;
+  onPlatformChange: (next: Platform) => void;
+}) {
+  const reduceMotion = useReducedMotion();
+  const copy = FORM_COPY[platform];
   const emailId = useId();
   const hintId = useId();
   const errorId = useId();
@@ -24,14 +36,14 @@ export function EarlyAccessForm() {
     event.preventDefault();
     if (!consent || busy) return;
     if (!looksLikeEmail(email)) {
-      setError('Enter the full email you use on Google Play, like name@gmail.com.');
+      setError(copy.invalidEmail);
       return;
     }
     setBusy(true);
     setError('');
     try {
-      const result = await signUp({ email, source: currentSource(search) });
-      storeSignUp({ token: result.token, createdAt: result.createdAt });
+      const result = await signUp({ email, source: currentSource(search), platform });
+      storeSignUp({ token: result.token, createdAt: result.createdAt, platform: result.platform });
       navigate(statusPath(result.token), { state: { duplicate: result.duplicate } });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Sign-up is not working right now. Try again in a few minutes.');
@@ -68,9 +80,33 @@ export function EarlyAccessForm() {
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-5">
+      <PhoneChoice
+        value={platform}
+        disabled={busy}
+        onChange={(next) => {
+          onPlatformChange(next);
+          if (error) setError('');
+        }}
+      />
+
+      <AnimatePresence initial={false}>
+        {platform === 'iphone' ? (
+          <motion.div
+            key="testflight"
+            initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="overflow-hidden -mt-1"
+          >
+            <TestFlightBox />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+
       <div className="flex flex-col gap-2">
         <label htmlFor={emailId} className="font-bold">
-          Google Play email
+          {copy.label}
         </label>
         <input
           id={emailId}
@@ -81,7 +117,7 @@ export function EarlyAccessForm() {
           spellCheck={false}
           maxLength={254}
           required
-          placeholder="name@gmail.com"
+          placeholder={copy.placeholder}
           value={email}
           disabled={busy}
           aria-describedby={`${hintId}${error ? ` ${errorId}` : ''}`}
@@ -93,7 +129,7 @@ export function EarlyAccessForm() {
           className="w-full bg-white text-black text-base placeholder-gray-500 border border-black/15 dark:border-white/20 rounded-2xl px-5 py-4 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/40 transition disabled:opacity-60"
         />
         <p id={hintId} className="text-sm text-gray-600 dark:text-gray-400">
-          The one signed in to the Play Store on your Android phone.
+          {copy.hint}
         </p>
       </div>
 
@@ -107,7 +143,7 @@ export function EarlyAccessForm() {
           className="mt-0.5 size-5 shrink-0 cursor-pointer accent-[var(--color-primary)]"
         />
         <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-          Add this email to GRIDGO's Google Play test and email me the invite. I agree to the{' '}
+          {copy.consent} I agree to the{' '}
           <Link
             to="/privacy"
             className="underline underline-offset-4 decoration-[var(--color-primary)] hover:text-[var(--color-primary-text)]"

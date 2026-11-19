@@ -3,7 +3,7 @@ import type { ComponentType, ForwardRefExoticComponent, HTMLAttributes, MouseEve
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { EcosystemSection } from './components/EcosystemSection';
 import { HowItWorksVideos } from './components/HowItWorksVideos';
-import { Menu, X, MessageCircle, Zap, ShieldCheck, ChevronUp, ChevronDown, Moon, Sun } from 'lucide-react';
+import { Menu, X, MessageCircle, Zap, ShieldCheck, ChevronUp, ChevronDown, Moon, Sun, Smartphone } from 'lucide-react';
 import { HardDriveUploadIcon, TruckIcon, ListIcon, TimerIcon, MessageCircleIcon } from 'lucide-animated';
 import { Link } from 'react-router-dom';
 import { landingLinks } from './utils/landingLinks';
@@ -153,14 +153,6 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
   );
 }
 
-function GooglePlayMark() {
-  return (
-    <svg className="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M3.609 1.814L13.792 12 3.61 22.186c-.165-.133-.298-.3-.389-.49A1.737 1.737 0 013 20.854V3.146c0-.306.075-.596.221-.842.146-.246.353-.448.6-.58.058-.031.121-.059.188-.083v.173zm1.116-.503l9.96 5.75L15.3 7.644 4.725 1.311zm11.393 6.643L20.655 10.6a1.738 1.738 0 010 2.802l-4.537 2.645-1.572-1.571 1.572-1.572zM4.725 22.689l10.575-6.333-1.403-1.403-9.172 7.736z" />
-    </svg>
-  );
-}
-
 function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed: boolean }) {
   const reduceMotion = useReducedMotion();
   return (
@@ -213,8 +205,8 @@ function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed:
                 to="/download#early-access"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-primary)] px-7 py-3.5 text-[15px] font-bold text-black shadow-[0_0_20px_rgba(255,222,88,0.35)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
               >
-                <GooglePlayMark />
-                Get Early Access on Google Play
+                <Smartphone size={18} aria-hidden="true" className="shrink-0" />
+                Get Early Access
               </Link>
               <Link
                 to="/download#apk"
