@@ -23,16 +23,8 @@ import {
 import type { ApkRelease } from './utils/apkReleases';
 import { useTheme } from './utils/useTheme';
 import { EarlyAccessForm } from './earlyAccess/EarlyAccessForm';
-import { AndroidGlyph, AppleGlyph } from './earlyAccess/PhoneChoice';
+import { AndroidMark, AppleMark, GooglePlayMark } from './components/BrandMarks';
 import { DEFAULT_PLATFORM, EARLY_ACCESS_NOTE, SIGN_UP_STEPS, type Platform } from './earlyAccess/logic';
-
-function GooglePlayGlyph({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M3.609 1.814L13.792 12 3.61 22.186c-.165-.133-.298-.3-.389-.49A1.737 1.737 0 013 20.854V3.146c0-.306.075-.596.221-.842.146-.246.353-.448.6-.58.058-.031.121-.059.188-.083v.173zm1.116-.503l9.96 5.75L15.3 7.644 4.725 1.311zm11.393 6.643L20.655 10.6a1.738 1.738 0 010 2.802l-4.537 2.645-1.572-1.571 1.572-1.572zM4.725 22.689l10.575-6.333-1.403-1.403-9.172 7.736z" />
-    </svg>
-  );
-}
 
 /** The machine-readable facts about a build, set in mono like the site footer. */
 function DataRow({ label, value }: { label: string; value: string }) {
@@ -280,8 +272,8 @@ function InstallChoices() {
         className="group relative flex items-start gap-5 rounded-3xl border-2 border-[var(--color-primary)] bg-[var(--color-primary)]/[0.07] p-6 md:p-8 transition hover:bg-[var(--color-primary)]/[0.12] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)]"
       >
         <span className="shrink-0 size-12 rounded-2xl bg-[var(--color-primary)] text-black flex items-center justify-center gap-0.5">
-          <AndroidGlyph className="size-[18px]" />
-          <AppleGlyph className="size-[17px]" />
+          <AndroidMark className="size-[18px]" />
+          <AppleMark className="size-[17px]" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -487,9 +479,7 @@ export function DownloadPage() {
           <div className="flex gap-3 shrink-0">
             {/* App Store button */}
             <div className="border border-black/20 dark:border-white/20 bg-white dark:bg-black/40 rounded-lg px-3 py-1.5 flex items-center gap-2 h-[44px] opacity-70">
-              <svg className="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16.365 14.363c-.015-3.08 2.502-4.545 2.617-4.618-1.428-2.091-3.64-2.378-4.423-2.42-1.894-.19-3.693 1.115-4.654 1.115-.963 0-2.434-1.09-4.01-1.059-2.063.03-3.965 1.196-5.029 3.037-2.146 3.712-.55 9.206 1.543 12.235 1.025 1.48 2.235 3.134 3.84 3.076 1.531-.061 2.112-.99 3.94-.99 1.828 0 2.35.99 3.94 1.02 1.636.03 2.686-1.449 3.706-2.94 1.176-1.716 1.66-3.376 1.682-3.46-.035-.015-3.146-1.206-3.152-4.996zM14.935 5.568c.843-1.02 1.411-2.436 1.256-3.848-1.218.049-2.695.811-3.565 1.826-.701.815-1.383 2.264-1.198 3.645 1.364.105 2.663-.603 3.507-1.623z" />
-              </svg>
+              <AppleMark className="w-[22px] h-[22px]" />
               <div className="flex flex-col items-start justify-center">
                 <span className="text-[14px] font-semibold leading-[1]">App Store</span>
               </div>
@@ -500,7 +490,7 @@ export function DownloadPage() {
               href="#early-access"
               className="border border-black/20 dark:border-white/20 bg-white dark:bg-black/40 rounded-lg px-3 py-1.5 flex items-center gap-2 h-[44px] hover:border-[var(--color-primary)] transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
             >
-              <GooglePlayGlyph className="w-[22px] h-[22px]" />
+              <GooglePlayMark className="w-[22px] h-[22px]" />
               <div className="flex flex-col items-start justify-center">
                 <span className="text-[14px] font-semibold leading-[1]">Google Play</span>
               </div>
