@@ -100,3 +100,42 @@ export function listReducer(state: ListState, action: ListAction): ListState {
 export function hasMore(state: ListState): boolean {
   return !state.loading && state.rows.length < state.total;
 }
+
+// ── Phone type ─────────────────────────────────────────────────────────────
+
+export type Phone = 'android' | 'iphone';
+
+/** The phone a sign-up is for. Rows from before iPhone sign-up (or without the field) are Android. */
+export function phoneOf(row: { platform?: string | null }): Phone {
+  return row.platform === 'iphone' ? 'iphone' : 'android';
+}
+
+/** What staff do per phone, and how the desk words it. */
+export const PHONE_COPY: Record<
+  Phone,
+  { label: string; action: string; busy: string; done: string; doneNote: string; reminder: string | null; notice: (email: string) => string }
+> = {
+  android: {
+    label: 'Android',
+    action: 'Grant',
+    busy: 'Granting…',
+    done: 'granted',
+    doneNote: 'Invite sent',
+    reminder: null,
+    notice: (email) => `Granted. The Google Play invite is on its way to ${email}.`,
+  },
+  iphone: {
+    label: 'iPhone',
+    action: 'Mark added',
+    busy: 'Saving…',
+    done: 'added',
+    doneNote: 'Apple invites',
+    reminder: 'Add Apple ID in App Store Connect first',
+    notice: (email) => `Marked added. Apple sends ${email} the TestFlight invite.`,
+  },
+};
+
+/** The status word on a row: an iPhone that has been granted reads "added". */
+export function statusLabel(row: { platform?: string | null; status: 'pending' | 'granted' }): string {
+  return row.status === 'pending' ? 'pending' : PHONE_COPY[phoneOf(row)].done;
+}

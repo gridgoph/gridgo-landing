@@ -84,7 +84,7 @@ export function deleteTicket(id: string) {
   return request<void>(`/support-tickets/${id}`, { method: 'DELETE' });
 }
 
-// ── Google Play early access (gridgo-api docs/EARLY_ACCESS_API.md) ──────────
+// ── Early access, Android and iPhone (gridgo-api docs/EARLY_ACCESS_API.md) ──────────
 
 export type EarlyAccessSignup = {
   id: string;
@@ -122,7 +122,7 @@ export function listEarlyAccess(query: {
   return request<EarlyAccessPage>(`/early-access/desk?${params}`);
 }
 
-/** Marks the sign-up granted and emails the Play opt-in link. Repeating it changes nothing. */
+/** Marks the sign-up granted (Android: emails the Play opt-in link; iPhone: no email). Repeating it changes nothing. */
 export function grantEarlyAccess(id: string) {
   return request<EarlyAccessSignup>(`/early-access/desk/${encodeURIComponent(id)}/grant`, {
     method: 'POST',
