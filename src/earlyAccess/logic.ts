@@ -1,13 +1,68 @@
 /**
- * The Google Play early-access sign-up, without React or the network, so the
- * check scripts can import it directly (scripts/check-early-access.mjs).
+ * The early-access sign-up (Google Play for Android, TestFlight for iPhone),
+ * without React or the network, so the check scripts can import it directly
+ * (scripts/check-early-access.mjs).
  *
  * Contract: gridgo-api `docs/EARLY_ACCESS_API.md`.
  */
 
 export type EarlyAccessStatus = 'pending' | 'granted';
 
-/** Google adds the tester within minutes; the countdown is that promise. */
+/** The API's own values. Android is the default, as it is on the API. */
+export type Platform = 'android' | 'iphone';
+export const DEFAULT_PLATFORM: Platform = 'android';
+
+/** Anything the API (or old storage) sends that is not iPhone is Android. */
+export function parsePlatform(raw: unknown): Platform {
+  return raw === 'iphone' ? 'iphone' : 'android';
+}
+
+/** Apple's TestFlight app on the Philippine App Store. Opens in a new tab. */
+export const TESTFLIGHT_URL = 'https://apps.apple.com/ph/app/testflight/id899247664';
+
+/** What the form says for each phone. Only the Android copy names Google Play. */
+export const FORM_COPY: Record<
+  Platform,
+  { label: string; placeholder: string; hint: string; consent: string; invalidEmail: string }
+> = {
+  android: {
+    label: 'Google Play email',
+    placeholder: 'name@gmail.com',
+    hint: 'The one signed in to the Play Store on your Android phone.',
+    consent: "Add this email to GRIDGO's Google Play test and email me the invite.",
+    invalidEmail: 'Enter the full email you use on Google Play, like name@gmail.com.',
+  },
+  iphone: {
+    label: 'Apple ID email',
+    placeholder: 'name@icloud.com',
+    hint: 'The one signed in to the App Store on your iPhone.',
+    consent: "Add this email to GRIDGO's TestFlight test so Apple can email me the invite.",
+    invalidEmail: 'Enter the full email of your Apple ID, like name@icloud.com.',
+  },
+};
+
+/** What happens after the button, shown beside the form where there is room. */
+export const SIGN_UP_STEPS: Record<Platform, string[]> = {
+  android: [
+    'Enter the email you use on Google Play.',
+    'We add you to the tester group and email your invite.',
+    'Open the invite and install GRIDGO from Google Play.',
+  ],
+  iphone: [
+    'Install TestFlight from the App Store.',
+    'Enter the email of your Apple ID.',
+    'Wait about 5 minutes for your TestFlight invite.',
+    'Open the invite and install GRIDGO in TestFlight.',
+  ],
+};
+
+/** The waiting page's progress list for each phone. */
+export const WAITING_STEPS: Record<Platform, string[]> = {
+  android: ['Request received', 'Adding you to the tester group', 'Sending your Google Play invite'],
+  iphone: ['Request received', 'Adding you as a TestFlight tester', 'Apple emails your TestFlight invite'],
+};
+
+/** The team adds the tester within minutes; the countdown is that promise. */
 export const SETUP_SECONDS = 5 * 60;
 /** Past this, a pending invite is most likely sitting in Spam. */
 export const SPAM_HINT_SECONDS = 15 * 60;
@@ -34,6 +89,20 @@ export function normalizeEmail(raw: string): string {
   return raw.trim().toLowerCase();
 }
 
+/**
+ * The POST /early-access body. `platform` is always sent: the live API has
+ * accepted "android" since the first release, and "iphone" needs the API
+ * that knows it (gridgo-api#406), which answers invalid_platform otherwise.
+ */
+export function signUpBody(input: { email: string; source: string | null; platform: Platform }) {
+  return {
+    email: normalizeEmail(input.email),
+    consent: true as const,
+    platform: input.platform,
+    ...(input.source ? { source: input.source } : {}),
+  };
+}
+
 /** Deliberately loose: the API validates for real. This catches typos only. */
 export function looksLikeEmail(raw: string): boolean {
   const value = normalizeEmail(raw);
@@ -55,6 +124,8 @@ export type StoredSignUp = {
   token: string;
   /** When the request was made, so the countdown survives a reload. */
   createdAt: string;
+  /** Which phone's steps to show before the status check answers. */
+  platform: Platform;
 };
 
 export function parseStored(raw: string | null): StoredSignUp | null {
@@ -66,7 +137,7 @@ export function parseStored(raw: string | null): StoredSignUp | null {
       typeof value.createdAt === 'string' && !Number.isNaN(Date.parse(value.createdAt))
         ? value.createdAt
         : new Date().toISOString();
-    return { token: value.token, createdAt };
+    return { token: value.token, createdAt, platform: parsePlatform(value.platform) };
   } catch {
     return null;
   }
@@ -102,10 +173,16 @@ export function litDots(remaining: number, status: EarlyAccessStatus): number {
 }
 
 /** The API's error code, mapped to a sentence a visitor can act on. */
-export function signUpErrorMessage(status: number, code: string | undefined): string {
+export function signUpErrorMessage(
+  status: number,
+  code: string | undefined,
+  platform: Platform = DEFAULT_PLATFORM,
+): string {
   if (code === 'consent_required') return 'Tick the box to agree before you continue.';
+  // An API that predates iPhone sign-up answers this way; Android still works.
+  if (code === 'invalid_platform') return 'iPhone sign-up is not open yet. Try again soon.';
   if (code === 'invalid_email' || code === 'email_invalid' || status === 400) {
-    return 'Enter the full email you use on Google Play, like name@gmail.com.';
+    return FORM_COPY[platform].invalidEmail;
   }
   if (status === 429) return 'Too many sign-ups from this connection. Try again in an hour.';
   return 'Sign-up is not working right now. Try again in a few minutes.';
