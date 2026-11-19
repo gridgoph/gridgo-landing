@@ -213,7 +213,16 @@ assert(/md:hidden[^>]*>Phone:</.test(earlyDesk), 'On a phone each row has a labe
 assert(earlyDesk.includes('<PhoneMark phone={phone}'), 'Every row shows the phone mark.');
 assert(earlyDesk.includes('{statusLabel(row)}'), 'Status comes from statusLabel (added for iPhone).');
 assert(earlyDesk.includes('phoneCopy.action') && earlyDesk.includes('phoneCopy.reminder'), 'The action and reminder follow the phone.');
-assert(phoneMark.includes('aria-hidden="true"'), 'The mark is decorative; the label carries the meaning.');
+assert(phoneMark.includes("from '../components/BrandMarks'"), 'The desk uses the real Android and Apple marks.');
+{
+  const marks = read('../src/components/BrandMarks.tsx');
+  assert(marks.includes('aria-hidden="true"'), 'The marks are decorative; the label carries the meaning.');
+  assert(marks.includes('fill="currentColor"'), 'The marks follow the text colour in light and dark.');
+  for (const name of ['AppleMark', 'AndroidMark', 'GooglePlayMark']) assert(marks.includes(`export function ${name}`), `${name} exists.`);
+  for (const file of ['../src/App.tsx', '../src/DownloadPage.tsx', '../src/earlyAccess/PhoneChoice.tsx']) {
+    assert(!/<svg[^>]*>\s*<path d="M(16\.365|3\.609|17\.6 9\.48)/.test(read(file)), `${file} uses BrandMarks, not a hand-copied glyph.`);
+  }
+}
 assert(earlyDesk.includes('row.source') && earlyDesk.includes('row.createdAt'));
 
 // ── Desk list races (review of PR #45, F1 and F2) ───────────────────────────

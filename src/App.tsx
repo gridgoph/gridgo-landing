@@ -12,6 +12,7 @@ import { OpenerStage } from './components/OpenerIntro';
 import { FooterLegalLinks } from './legal/FooterLegalLinks';
 import { openCookieSettings } from './consent/cookieChoice';
 import { EARLY_ACCESS_NOTE } from './earlyAccess/logic';
+import { AppleMark, GooglePlayMark } from './components/BrandMarks';
 
 /**
  * three.js is most of the landing bundle and the scene is decorative, so it is
@@ -671,9 +672,7 @@ function BetaSection() {
               <div className="flex gap-3">
                 {/* App Store button */}
                 <div className="border border-black/20 dark:border-white/20 bg-white dark:bg-black/10 dark:bg-black/40 rounded-lg px-3 py-1.5 flex items-center gap-2 cursor-pointer hover:bg-white/10 transition-colors h-[44px]">
-                  <svg className="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16.365 14.363c-.015-3.08 2.502-4.545 2.617-4.618-1.428-2.091-3.64-2.378-4.423-2.42-1.894-.19-3.693 1.115-4.654 1.115-.963 0-2.434-1.09-4.01-1.059-2.063.03-3.965 1.196-5.029 3.037-2.146 3.712-.55 9.206 1.543 12.235 1.025 1.48 2.235 3.134 3.84 3.076 1.531-.061 2.112-.99 3.94-.99 1.828 0 2.35.99 3.94 1.02 1.636.03 2.686-1.449 3.706-2.94 1.176-1.716 1.66-3.376 1.682-3.46-.035-.015-3.146-1.206-3.152-4.996zM14.935 5.568c.843-1.02 1.411-2.436 1.256-3.848-1.218.049-2.695.811-3.565 1.826-.701.815-1.383 2.264-1.198 3.645 1.364.105 2.663-.603 3.507-1.623z" />
-                  </svg>
+                  <AppleMark className="w-[22px] h-[22px]" />
                   <div className="flex flex-col items-start justify-center">
                     {/* <span className="text-[9px] leading-[1] text-gray-700 dark:text-gray-300 mb-[2px]">Download on the</span> */}
                     <span className="text-[14px] font-semibold leading-[1]">App Store</span>
@@ -682,9 +681,7 @@ function BetaSection() {
 
                 {/* Google Play button */}
                 <div className="border border-black/20 dark:border-white/20 bg-white dark:bg-black/10 dark:bg-black/40 rounded-lg px-3 py-1.5 flex items-center gap-2 cursor-pointer hover:bg-white/10 transition-colors h-[44px]">
-                  <svg className="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3.609 1.814L13.792 12 3.61 22.186c-.165-.133-.298-.3-.389-.49A1.737 1.737 0 013 20.854V3.146c0-.306.075-.596.221-.842.146-.246.353-.448.6-.58.058-.031.121-.059.188-.083v.173zm1.116-.503l9.96 5.75L15.3 7.644 4.725 1.311zm11.393 6.643L20.655 10.6a1.738 1.738 0 010 2.802l-4.537 2.645-1.572-1.571 1.572-1.572zM4.725 22.689l10.575-6.333-1.403-1.403-9.172 7.736z" />
-                  </svg>
+                  <GooglePlayMark className="w-[22px] h-[22px]" />
                   <div className="flex flex-col items-start justify-center">
                     {/* <span className="text-[9px] leading-[1] text-gray-700 dark:text-gray-300 mb-[2px]">GET IT ON</span> */}
                     <span className="text-[14px] font-semibold leading-[1]">Google Play</span>
