@@ -7,9 +7,9 @@
  */
 type MarkProps = { className?: string };
 
-function Mark({ className, d }: MarkProps & { d: string }) {
+function Mark({ className, d, viewBox = '0 0 24 24' }: MarkProps & { d: string; viewBox?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+    <svg className={className} viewBox={viewBox} fill="currentColor" aria-hidden="true" focusable="false">
       <path d={d} />
     </svg>
   );
@@ -28,8 +28,16 @@ export function AppleMark({ className }: MarkProps) {
   return <Mark className={className} d={APPLE} />;
 }
 
+/**
+ * The Android head fills only the lower half of its 24×24 square, so in a
+ * square box it renders as a small dome with two dots, which reads as a
+ * padlock. Cropped to the glyph (antenna tips to chin) and drawn in a wide
+ * box, its antennae and eyes are legible. Give it a width about 1.6× its height.
+ */
+export const ANDROID_VIEWBOX = '0 5.2 24 14';
+
 export function AndroidMark({ className }: MarkProps) {
-  return <Mark className={className} d={ANDROID} />;
+  return <Mark className={className} d={ANDROID} viewBox={ANDROID_VIEWBOX} />;
 }
 
 export function GooglePlayMark({ className }: MarkProps) {

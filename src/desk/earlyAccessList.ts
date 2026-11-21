@@ -8,7 +8,7 @@
  * starts a fresh generation that reloads from offset zero rather than paging
  * on from an offset the server no longer agrees with.
  */
-import type { EarlyAccessPage, EarlyAccessSignup } from './api';
+import type { AppCounts, EarlyAccessPage, EarlyAccessSignup } from './api';
 
 export type ListState = {
   /** `${filter}|${query}` the rows belong to. */
@@ -16,6 +16,8 @@ export type ListState = {
   generation: number;
   rows: EarlyAccessSignup[];
   counts: { pending: number; granted: number };
+  /** Null until an API that knows shop sign-up answers. */
+  countsByApp: { customer: AppCounts; shop: AppCounts } | null;
   total: number;
   loading: boolean;
   loadingMore: boolean;
@@ -37,14 +39,16 @@ export const initialList: ListState = {
   generation: 0,
   rows: [],
   counts: { pending: 0, granted: 0 },
+  countsByApp: null,
   total: 0,
   loading: true,
   loadingMore: false,
   error: '',
 };
 
-export function listKey(filter: string, query: string): string {
-  return `${filter}|${query}`;
+/** `app` is the app filter; omitted means both apps. */
+export function listKey(filter: string, query: string, app: string = 'all'): string {
+  return `${app}|${filter}|${query}`;
 }
 
 function current(state: ListState, action: { key: string; generation: number }): boolean {
@@ -76,6 +80,7 @@ export function listReducer(state: ListState, action: ListAction): ListState {
         ...state,
         rows,
         counts: action.page.counts,
+        countsByApp: action.page.countsByApp ?? null,
         total: action.page.total,
         loading: false,
         loadingMore: false,
@@ -136,6 +141,47 @@ export const PHONE_COPY: Record<
 };
 
 /** The status word on a row: an iPhone that has been granted reads "added". */
-export function statusLabel(row: { platform?: string | null; status: 'pending' | 'granted' }): string {
+export function statusLabel(row: { app?: string | null; platform?: string | null; status: 'pending' | 'granted' }): string {
+  if (isNotifyOnly(row)) return 'notify only';
   return row.status === 'pending' ? 'pending' : PHONE_COPY[phoneOf(row)].done;
 }
+
+// ── App ────────────────────────────────────────────────────────────────────
+
+export type App = 'customer' | 'shop';
+
+/** The app a sign-up is for. Rows from before shop sign-up (or without the field) are the customer app. */
+export function appOf(row: { app?: string | null }): App {
+  return row.app === 'shop' ? 'shop' : 'customer';
+}
+
+export const APP_LABEL: Record<App, string> = { customer: 'Customer', shop: 'Shop' };
+
+/**
+ * The shop app is Android-only: an iPhone shop asked to be told when it comes
+ * to iPhone. The API refuses to grant it (409 shop_android_only), so the desk
+ * offers no button and does not count it toward the Google Play target.
+ */
+export function isNotifyOnly(row: { app?: string | null; platform?: string | null }): boolean {
+  return appOf(row) === 'shop' && phoneOf(row) === 'iphone';
+}
+
+/** What staff do for a shop tester on Android, and what the desk says after. */
+export const SHOP_COPY = {
+  reminder: 'Shop tester: add to the shop Google Group if it is not added for you',
+  notice: (email: string) => `Granted. ${email} is a shop tester: the GRIDGO for shops Google Play invite is on its way.`,
+  notifyOnly: 'Notify only',
+  notifyOnlyNote: 'No invite: shop app is Android-only',
+};
+
+/** The desk notice after a grant, by app and phone. */
+export function grantNotice(row: { app?: string | null; platform?: string | null; email: string }): string {
+  return appOf(row) === 'shop' ? SHOP_COPY.notice(row.email) : PHONE_COPY[phoneOf(row)].notice(row.email);
+}
+
+/**
+ * Google Play's closed test needs at least 12 testers for 14 days before an
+ * app can go to production. The real per-app target and opt-in count live in
+ * the Super Admin tester settings; the desk shows invites granted against it.
+ */
+export const GOOGLE_PLAY_TARGET = 12;

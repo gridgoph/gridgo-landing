@@ -16,7 +16,7 @@ export const PRIVACY_CONTACT = 'gridgo26@gmail.com'
 
 /** Shown on /privacy and /delete-account. Change both dates together when the text changes. */
 export const EFFECTIVE_DATE = '7 October 2026'
-export const LAST_UPDATED = '19 November 2026'
+export const LAST_UPDATED = '22 November 2026'
 
 /** The Terms of Service (/terms) carry their own dates. */
 export const TERMS_EFFECTIVE_DATE = '11 November 2026'
