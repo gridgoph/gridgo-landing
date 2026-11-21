@@ -90,6 +90,10 @@ export type EarlyAccessSignup = {
   id: string;
   email: string;
   source: string | null;
+  /** `customer` or `shop`; absent from an API that predates shop sign-up (customer). */
+  app?: string | null;
+  /** Optional, shop sign-ups only. */
+  shopName?: string | null;
   platform: string;
   status: 'pending' | 'granted';
   createdAt: string;
@@ -97,9 +101,13 @@ export type EarlyAccessSignup = {
   grantedBy: string | null;
 };
 
+export type AppCounts = { pending: number; granted: number; androidGranted: number; notifyOnly: number };
+
 export type EarlyAccessPage = {
   signups: EarlyAccessSignup[];
   counts: { pending: number; granted: number };
+  /** Per app, for the search only (no app, status or paging filter). Absent before shop sign-up. */
+  countsByApp?: { customer: AppCounts; shop: AppCounts };
   total: number;
   limit: number;
   offset: number;
@@ -109,6 +117,7 @@ export const EARLY_ACCESS_PAGE_SIZE = 50;
 
 export function listEarlyAccess(query: {
   status: 'pending' | 'granted' | 'all';
+  app?: 'customer' | 'shop' | 'all';
   q: string;
   offset: number;
 }) {
@@ -116,13 +125,14 @@ export function listEarlyAccess(query: {
     limit: String(EARLY_ACCESS_PAGE_SIZE),
     offset: String(query.offset),
   });
+  if (query.app && query.app !== 'all') params.set('app', query.app);
   if (query.status !== 'all') params.set('status', query.status);
   const q = query.q.trim();
   if (q) params.set('q', q.slice(0, 254));
   return request<EarlyAccessPage>(`/early-access/desk?${params}`);
 }
 
-/** Marks the sign-up granted (Android: emails the Play opt-in link; iPhone: no email). Repeating it changes nothing. */
+/** Marks the sign-up granted (Android: emails the customer or shop Play opt-in link; iPhone: no email). Repeating it changes nothing. An iPhone shop cannot be granted (409 shop_android_only). */
 export function grantEarlyAccess(id: string) {
   return request<EarlyAccessSignup>(`/early-access/desk/${encodeURIComponent(id)}/grant`, {
     method: 'POST',
