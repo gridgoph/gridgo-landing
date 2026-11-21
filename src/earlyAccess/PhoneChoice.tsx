@@ -3,9 +3,10 @@ import { motion, useReducedMotion } from 'framer-motion';
 import type { Platform } from './logic';
 import { AndroidMark, AppleMark } from '../components/BrandMarks';
 
-const OPTIONS: { value: Platform; label: string; Mark: typeof AppleMark }[] = [
-  { value: 'android', label: 'Android', Mark: AndroidMark },
-  { value: 'iphone', label: 'iPhone', Mark: AppleMark },
+/** Each mark at its own proportions: the Android head is wide, the Apple logo tall. */
+const OPTIONS: { value: Platform; label: string; Mark: typeof AppleMark; size: string }[] = [
+  { value: 'android', label: 'Android', Mark: AndroidMark, size: 'h-[15px] w-[26px]' },
+  { value: 'iphone', label: 'iPhone', Mark: AppleMark, size: 'size-5' },
 ];
 
 /**
@@ -29,7 +30,7 @@ export function PhoneChoice({
     <fieldset disabled={disabled} className="flex flex-col gap-2 min-w-0">
       <legend className="font-bold mb-2">Your phone</legend>
       <div className="grid grid-cols-2 gap-1 p-1 rounded-full border border-black/15 dark:border-white/20 bg-white/70 dark:bg-white/[0.04]">
-        {OPTIONS.map(({ value: option, label, Mark }) => {
+        {OPTIONS.map(({ value: option, label, Mark, size }) => {
           const checked = value === option;
           return (
             <label
@@ -54,7 +55,7 @@ export function PhoneChoice({
                   aria-hidden="true"
                 />
               ) : null}
-              <Mark className="relative size-5 shrink-0" />
+              <Mark className={`relative shrink-0 ${size}`} />
               <span className="relative">{label}</span>
             </label>
           );

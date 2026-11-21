@@ -10,8 +10,9 @@ import {
   Moon,
   ShieldCheck,
   Sun,
+  Users,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { GRIDGO_APPS, minimumAndroidVersion } from './utils/landingLinks';
 import type { GridgoApp } from './utils/landingLinks';
 import {
@@ -23,8 +24,20 @@ import {
 import type { ApkRelease } from './utils/apkReleases';
 import { useTheme } from './utils/useTheme';
 import { EarlyAccessForm } from './earlyAccess/EarlyAccessForm';
+import { AppChoice } from './earlyAccess/AppChoice';
 import { AndroidMark, AppleMark, GooglePlayMark } from './components/BrandMarks';
-import { DEFAULT_PLATFORM, EARLY_ACCESS_NOTE, SIGN_UP_STEPS, type Platform } from './earlyAccess/logic';
+import {
+  appFromSearch,
+  DEFAULT_APP,
+  DEFAULT_PLATFORM,
+  EARLY_ACCESS_NOTE,
+  SECTION_COPY,
+  SHOP_STEPS,
+  SHOP_TEAM_NOTE,
+  SIGN_UP_STEPS,
+  type EarlyApp,
+  type Platform,
+} from './earlyAccess/logic';
 
 /** The machine-readable facts about a build, set in mono like the site footer. */
 function DataRow({ label, value }: { label: string; value: string }) {
@@ -319,23 +332,41 @@ function InstallChoices() {
 }
 
 function EarlyAccessSection() {
+  const { search } = useLocation();
+  // `?app=shop` (every "for print shops" link) preselects the shop app; the switch still works.
+  const [app, setApp] = useState<EarlyApp>(() => appFromSearch(search) ?? DEFAULT_APP);
   const [platform, setPlatform] = useState<Platform>(DEFAULT_PLATFORM);
+  // A later link with another ?app= (same page, new address) picks again.
+  const linkedApp = appFromSearch(search);
+  const [seenLink, setSeenLink] = useState(linkedApp);
+  if (linkedApp !== seenLink) {
+    setSeenLink(linkedApp);
+    if (linkedApp) setApp(linkedApp);
+  }
+  const shop = app === 'shop';
+  const copy = SECTION_COPY[app];
+  const steps = shop ? SHOP_STEPS : SIGN_UP_STEPS[platform];
   return (
     <section id="early-access" className="scroll-mt-8 pt-20 md:pt-28">
-      <div className="relative overflow-hidden rounded-3xl border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/[0.05] p-6 sm:p-8 md:p-14">
+      <div className="relative overflow-clip rounded-3xl border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/[0.05] p-6 sm:p-8 md:p-14">
         <div className="absolute -top-24 -right-24 w-80 h-80 bg-[var(--color-primary)]/15 blur-[100px] pointer-events-none rounded-full" />
+        {/* The app comes first on every screen: the title, steps and form below follow it. */}
+        <div className="relative mb-10 md:mb-12 md:max-w-2xl">
+          <AppChoice value={app} onChange={setApp} />
+        </div>
         <div className="relative grid grid-cols-1 md:grid-cols-[1fr_minmax(0,420px)] gap-8 md:gap-16 items-start">
           <div>
             <p className="text-xs tracking-[0.35em] uppercase text-[var(--color-primary-text)] mb-3 font-bold">
               Option 1
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">Early Access</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">{shop ? copy.title : 'Early Access'}</h2>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              For the GRIDGO customer app. {EARLY_ACCESS_NOTE}
+              {shop ? copy.intro : <>For the GRIDGO customer app. {EARLY_ACCESS_NOTE}</>}
             </p>
-            {/* Steps beside the form follow the phone chosen in it. */}
-            <ol className="hidden md:flex flex-col gap-5 mt-10">
-              {SIGN_UP_STEPS[platform].map((step, i) => (
+            {/* Steps beside the form follow the app and the phone chosen in it.
+                A shop sees its steps on a phone too: the last two are what the test asks of it. */}
+            <ol className={`${shop ? 'flex' : 'hidden md:flex'} flex-col gap-5 mt-8 md:mt-10`}>
+              {steps.map((step, i) => (
                 <li key={step} className="flex items-start gap-4">
                   <span className="shrink-0 w-8 h-8 rounded-full border border-[var(--color-primary)]/50 bg-[var(--color-primary)]/10 text-[var(--color-primary-text)] font-mono text-[13px] font-bold flex items-center justify-center">
                     {i + 1}
@@ -344,8 +375,14 @@ function EarlyAccessSection() {
                 </li>
               ))}
             </ol>
+            {shop ? (
+              <p className="mt-8 flex items-start gap-3 rounded-2xl border border-black/10 dark:border-white/15 bg-white/60 dark:bg-white/[0.03] px-4 py-3.5 text-sm leading-relaxed text-gray-800 dark:text-gray-200">
+                <Users size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-[var(--color-primary-text)]" />
+                <span>{SHOP_TEAM_NOTE}</span>
+              </p>
+            ) : null}
           </div>
-          <EarlyAccessForm platform={platform} onPlatformChange={setPlatform} />
+          <EarlyAccessForm app={app} platform={platform} onPlatformChange={setPlatform} />
         </div>
       </div>
     </section>

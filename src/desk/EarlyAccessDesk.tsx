@@ -1,9 +1,24 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { EARLY_ACCESS_PAGE_SIZE, grantEarlyAccess, listEarlyAccess, type EarlyAccessSignup } from './api';
-import { PHONE_COPY, hasMore, initialList, listKey, listReducer, phoneOf, statusLabel } from './earlyAccessList';
+import {
+  APP_LABEL,
+  GOOGLE_PLAY_TARGET,
+  PHONE_COPY,
+  SHOP_COPY,
+  appOf,
+  grantNotice,
+  hasMore,
+  initialList,
+  isNotifyOnly,
+  listKey,
+  listReducer,
+  phoneOf,
+  statusLabel,
+} from './earlyAccessList';
 import { PhoneMark } from './PhoneMark';
 
 type Filter = 'pending' | 'granted' | 'all';
+type AppFilter = 'all' | 'customer' | 'shop';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—';
@@ -23,6 +38,7 @@ function message(caught: unknown, fallback: string): string {
  */
 export function EarlyAccessDesk() {
   const [filter, setFilter] = useState<Filter>('pending');
+  const [appFilter, setAppFilter] = useState<AppFilter>('all');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   /** Bumped after a grant: the list it changed is fetched again from the top. */
@@ -40,15 +56,15 @@ export function EarlyAccessDesk() {
     return () => window.clearTimeout(timer);
   }, [search]);
 
-  const key = listKey(filter, query);
+  const key = listKey(filter, query, appFilter);
   useEffect(() => {
-    const ticket = { key: listKey(filter, query), generation: ++generation.current };
+    const ticket = { key: listKey(filter, query, appFilter), generation: ++generation.current };
     dispatch({ type: 'request', ...ticket });
-    listEarlyAccess({ status: filter, q: query, offset: 0 }).then(
+    listEarlyAccess({ status: filter, app: appFilter, q: query, offset: 0 }).then(
       (page) => dispatch({ type: 'page', ...ticket, offset: 0, page }),
       (caught) => dispatch({ type: 'failed', ...ticket, offset: 0, message: message(caught, 'Could not load sign-ups.') }),
     );
-  }, [filter, query, reloads]);
+  }, [filter, appFilter, query, reloads]);
 
   useEffect(() => {
     if (!copiedId) return;
@@ -62,7 +78,7 @@ export function EarlyAccessDesk() {
     const ticket = { key: list.key, generation: list.generation };
     const offset = list.rows.length;
     dispatch({ type: 'request-more' });
-    listEarlyAccess({ status: filter, q: query, offset }).then(
+    listEarlyAccess({ status: filter, app: appFilter, q: query, offset }).then(
       (page) => dispatch({ type: 'page', ...ticket, offset, page }),
       (caught) => dispatch({ type: 'failed', ...ticket, offset, message: message(caught, 'Could not load more sign-ups.') }),
     );
@@ -78,7 +94,7 @@ export function EarlyAccessDesk() {
       // The grant moved this person out of Pending, so offsets into the old
       // list no longer line up with the server's. Fetch it again from the top.
       setReloads((count) => count + 1);
-      setNotice(PHONE_COPY[phoneOf(updated)].notice(updated.email));
+      setNotice(grantNotice(updated));
     } catch (caught) {
       setGrantError(message(caught, 'Could not grant access.'));
     } finally {
@@ -95,7 +111,7 @@ export function EarlyAccessDesk() {
     }
   }
 
-  const { rows, counts, total, loadingMore } = list;
+  const { rows, counts, countsByApp, total, loadingMore } = list;
   // Rows from another filter are never shown; a reload of this list keeps its rows up.
   const loading = list.key !== key || (list.loading && rows.length === 0);
   const error = grantError || list.error;
@@ -105,6 +121,11 @@ export function EarlyAccessDesk() {
     all: `All ${counts.pending + counts.granted}`,
   };
   const more = list.key === key && hasMore(list);
+  const appLabel: Record<AppFilter, string> = {
+    all: 'All apps',
+    customer: countsByApp ? `Customer ${countsByApp.customer.pending + countsByApp.customer.granted}` : 'Customer',
+    shop: countsByApp ? `Shop ${countsByApp.shop.pending + countsByApp.shop.granted}` : 'Shop',
+  };
 
   return (
     <main aria-labelledby="early-access-desk-title" className="min-h-0 desk-scroll overflow-y-auto p-4 sm:p-6 md:p-10">
@@ -119,9 +140,54 @@ export function EarlyAccessDesk() {
             <PhoneMark phone="iphone" />
             <span>Add the Apple ID to TestFlight in App Store Connect, then Mark added. Apple emails the invite.</span>
           </li>
+          <li className="flex items-start gap-2">
+            <span className="shrink-0 mt-px text-[10px] uppercase tracking-[0.2em] text-black bg-[#FFDE58] px-1.5 py-0.5">Shop</span>
+            <span>Shop testers get GRIDGO for shops. Android: Grant sends the shop app invite (add them to the shop Google Group first if it is not automatic). iPhone: notify only, no invite.</span>
+          </li>
         </ul>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+        {countsByApp ? (
+          <dl className="grid grid-cols-2 gap-px bg-[#262626] border border-[#262626] mb-6 max-w-xl" aria-label="Google Play testers">
+            {(['customer', 'shop'] as const).map((app) => {
+              const c = countsByApp[app];
+              return (
+                <div key={app} className="bg-[#070707] px-4 py-3">
+                  <dt className="text-[10px] uppercase tracking-[0.2em] text-[#a3a3a3]">
+                    {app === 'shop' ? 'Shop app' : 'Customer app'}: Google Play
+                  </dt>
+                  <dd className="mt-1">
+                    <span className={`text-2xl font-bold ${c.androidGranted >= GOOGLE_PLAY_TARGET ? 'text-[#FFDE58]' : 'text-[#f4f4f4]'}`}>
+                      {c.androidGranted}
+                    </span>
+                    <span className="text-sm text-[#a3a3a3]"> / {GOOGLE_PLAY_TARGET} invited</span>
+                    {app === 'shop' && c.notifyOnly > 0 ? (
+                      <span className="block text-[11px] text-[#a3a3a3]">{c.notifyOnly} iPhone notify only, not counted</span>
+                    ) : null}
+                  </dd>
+                </div>
+              );
+            })}
+            <p className="col-span-2 bg-[#070707] px-4 py-2 text-[11px] text-[#a3a3a3]">
+              Android invites granted per app, counted separately. Not confirmed opt-ins: the Play Console count is in tester settings.
+            </p>
+          </dl>
+        ) : null}
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5 flex-wrap">
+          <div className="flex gap-1 text-xs uppercase tracking-[0.18em]" role="tablist" aria-label="App">
+            {(['all', 'customer', 'shop'] as AppFilter[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={appFilter === key}
+                onClick={() => setAppFilter(key)}
+                className={`px-3 py-2 whitespace-nowrap border ${appFilter === key ? 'border-[#FFDE58] text-[#FFDE58]' : 'border-transparent text-[#8a8a8a] hover:text-[#f4f4f4]'}`}
+              >
+                {appLabel[key]}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-1 text-xs uppercase tracking-[0.18em]" role="tablist" aria-label="Status">
             {(['pending', 'granted', 'all'] as Filter[]).map((key) => (
               <button
@@ -161,6 +227,7 @@ export function EarlyAccessDesk() {
             <thead className="hidden md:table-header-group">
               <tr className="text-left text-[10px] uppercase tracking-[0.2em] text-[#8a8a8a]">
                 <th className="py-3 pr-4 font-normal">Email</th>
+                <th className="py-3 pr-4 font-normal">App</th>
                 <th className="py-3 pr-4 font-normal">Phone</th>
                 <th className="py-3 pr-4 font-normal">Source</th>
                 <th className="py-3 pr-4 font-normal">Status</th>
@@ -172,6 +239,9 @@ export function EarlyAccessDesk() {
               {rows.map((row) => {
                 const phone = phoneOf(row);
                 const phoneCopy = PHONE_COPY[phone];
+                const app = appOf(row);
+                const notifyOnly = isNotifyOnly(row);
+                const reminder = app === 'shop' && !notifyOnly ? SHOP_COPY.reminder : phoneCopy.reminder;
                 return (
                 <tr
                   key={row.id}
@@ -188,6 +258,20 @@ export function EarlyAccessDesk() {
                         {copiedId === row.id ? 'Copied' : 'Copy'}
                       </button>
                     </span>
+                    {app === 'shop' && row.shopName ? (
+                      <span className="block text-[12px] text-[#cfcfcf] break-words">
+                        <span className="text-[#8a8a8a]">Shop: </span>
+                        {row.shopName}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="col-start-1 md:py-4 md:pr-4 whitespace-nowrap">
+                    <span className="md:hidden text-[#8a8a8a]">App: </span>
+                    {app === 'shop' ? (
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-black bg-[#FFDE58] px-1.5 py-0.5">{APP_LABEL.shop}</span>
+                    ) : (
+                      <span className="text-[#cfcfcf]">{APP_LABEL.customer}</span>
+                    )}
                   </td>
                   <td className="col-start-1 text-[#cfcfcf] md:py-4 md:pr-4 whitespace-nowrap">
                     <span className="flex items-center gap-1.5">
@@ -203,7 +287,7 @@ export function EarlyAccessDesk() {
                   <td className="col-start-1 md:py-4 md:pr-4">
                     <span
                       className={`text-[10px] uppercase tracking-[0.2em] ${
-                        row.status === 'pending' ? 'text-[#FFDE58]' : 'text-[#8a8a8a]'
+                        row.status === 'pending' && !notifyOnly ? 'text-[#FFDE58]' : 'text-[#8a8a8a]'
                       }`}
                     >
                       {statusLabel(row)}
@@ -215,21 +299,23 @@ export function EarlyAccessDesk() {
                   <td className="col-start-1 text-[#8a8a8a] md:py-4 md:pr-4 whitespace-nowrap">
                     {formatDate(row.createdAt)}
                   </td>
-                  <td className="col-start-2 row-start-1 row-span-5 self-center md:py-4 text-right">
-                    {row.status === 'pending' ? (
+                  <td className="col-start-2 row-start-1 row-span-6 self-center md:py-4 text-right">
+                    {notifyOnly ? (
+                      <span className="text-[#a3a3a3] text-xs inline-block max-w-[8rem] md:max-w-[11rem]">{SHOP_COPY.notifyOnlyNote}</span>
+                    ) : row.status === 'pending' ? (
                       <span className="inline-flex flex-col items-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => grant(row)}
                           disabled={busyId === row.id}
-                          aria-describedby={phoneCopy.reminder ? `reminder-${row.id}` : undefined}
+                          aria-describedby={reminder ? `reminder-${row.id}` : undefined}
                           className="px-5 py-2.5 bg-[#FFDE58] text-black font-bold whitespace-nowrap disabled:opacity-50"
                         >
                           {busyId === row.id ? phoneCopy.busy : phoneCopy.action}
                         </button>
-                        {phoneCopy.reminder ? (
+                        {reminder ? (
                           <span id={`reminder-${row.id}`} className="text-[11px] leading-snug text-[#a3a3a3] max-w-[8rem] md:max-w-[11rem]">
-                            {phoneCopy.reminder}
+                            {reminder}
                           </span>
                         ) : null}
                       </span>

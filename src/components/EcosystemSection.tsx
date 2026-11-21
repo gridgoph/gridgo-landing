@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { SHOP_EARLY_ACCESS_PATH } from '../earlyAccess/logic';
 import { UserIcon, BriefcaseBusinessIcon, HammerIcon } from 'lucide-animated';
 
 type AnimatedIconHandle = {
@@ -215,6 +218,17 @@ export function EcosystemSection({ isDarkMode: _isDarkMode }: { isDarkMode?: boo
                 <span className="text-sm font-medium leading-relaxed text-gray-800 dark:text-gray-200"><strong>Guaranteed Payouts:</strong> Secure, automatic payments.</span>
               </li>
             </ul>
+            {/* The shop app's test sign-up, with the shop app already chosen. */}
+            <div className="mt-auto pt-10">
+              <Link
+                to={SHOP_EARLY_ACCESS_PATH}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-primary)] px-4 py-3.5 text-center text-sm font-bold text-black transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+              >
+                Become a printing supplier
+                <ArrowRight size={18} aria-hidden="true" />
+              </Link>
+              <p className="mt-3 text-center text-[13px] text-gray-600 dark:text-gray-400">Join the shop app's early access test.</p>
+            </div>
           </motion.div>
         </div>
       </div>

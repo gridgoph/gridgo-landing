@@ -1,18 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, ExternalLink, Loader2, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, Bell, Check, ExternalLink, Loader2, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../utils/useTheme';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
-import { EarlyAccessError, fetchStatus, forgetSignUp, readSignUp, storeSignUp, type StatusResult } from './api';
 import {
+  EarlyAccessError,
+  fetchStatus,
+  forgetSignUp,
+  readSignUp,
+  readSignUpByToken,
+  storeSignUp,
+  type StatusResult,
+} from './api';
+import {
+  DEFAULT_APP,
   DEFAULT_PLATFORM,
+  SHOP_STEPS,
+  SHOP_WAITING_STEPS,
   formatCountdown,
   litDots,
   POLL_MS,
   statusPath,
   WAITING_STEPS,
   waitingPhase,
+  type EarlyApp,
   type Platform,
 } from './logic';
 import { GridDots } from './GridDots';
@@ -47,18 +59,23 @@ export function EarlyAccessStatusPage() {
 
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [createdAt, setCreatedAt] = useState(() => {
-    const stored = readSignUp();
-    return stored && (!urlToken || stored.token === urlToken) ? stored.createdAt : new Date().toISOString();
+    const stored = readSignUpByToken(urlToken);
+    return stored ? stored.createdAt : new Date().toISOString();
   });
   const [now, setNow] = useState(() => Date.now());
-  // The API names the phone; until it answers (or if it predates iPhone), this device remembers it.
-  const [storedPlatform] = useState<Platform>(() => {
-    const stored = readSignUp();
-    return stored && (!urlToken || stored.token === urlToken) ? stored.platform : DEFAULT_PLATFORM;
-  });
+  // The API names the phone and the app; until it answers (or if it predates
+  // them), this device remembers them.
+  const [storedPlatform] = useState<Platform>(() => readSignUpByToken(urlToken)?.platform ?? DEFAULT_PLATFORM);
+  const [storedApp] = useState<EarlyApp>(() => readSignUpByToken(urlToken)?.app ?? DEFAULT_APP);
+  const app: EarlyApp = (load.state === 'ready' ? load.result.app : undefined) ?? storedApp;
+  const platformNow: Platform = (load.state === 'ready' ? load.result.platform : undefined) ?? storedPlatform;
+  // The shop app is Android-only: an iPhone shop asked to be told, not invited.
+  const notifyOnly = app === 'shop' && platformNow === 'iphone';
 
   const granted = Boolean(urlToken) && load.state === 'ready' && load.result.status === 'granted';
-  useDocumentTitle(granted ? "You're in · GRIDGO" : 'Setting up your access · GRIDGO');
+  useDocumentTitle(
+    notifyOnly ? "You're on the list · GRIDGO" : granted ? "You're in · GRIDGO" : 'Setting up your access · GRIDGO',
+  );
 
   // The token is in this page's address: never hand it to another site as a referrer.
   useEffect(() => {
@@ -69,30 +86,33 @@ export function EarlyAccessStatusPage() {
     return () => meta.remove();
   }, []);
 
-  // No token in the link: use the one this device signed up with.
-  const storedToken = urlToken ? null : (readSignUp()?.token ?? null);
+  // No token in the link: use the one this device signed up with (the customer app's first).
+  const storedToken = urlToken ? null : (readSignUp('customer')?.token ?? readSignUp('shop')?.token ?? null);
   useEffect(() => {
     if (storedToken) navigate(statusPath(storedToken), { replace: true });
   }, [storedToken, navigate]);
   const shown: Load = urlToken ? load : storedToken ? { state: 'loading' } : { state: 'missing' };
   const platform: Platform = (shown.state === 'ready' ? shown.result.platform : undefined) ?? storedPlatform;
+  const shop = app === 'shop';
 
   const check = useCallback(async () => {
     if (!urlToken) return;
     try {
       const result = await fetchStatus(urlToken);
       setLoad({ state: 'ready', result, stale: false });
-      const stored = readSignUp();
-      const since = result.createdAt ?? (stored?.token === urlToken ? stored.createdAt : undefined);
+      const stored = readSignUpByToken(urlToken);
+      const since = result.createdAt ?? stored?.createdAt;
       if (since) setCreatedAt(since);
       storeSignUp({
         token: urlToken,
-        createdAt: since ?? stored?.createdAt ?? new Date().toISOString(),
-        platform: result.platform ?? (stored?.token === urlToken ? stored.platform : DEFAULT_PLATFORM),
+        app: result.app ?? stored?.app ?? DEFAULT_APP,
+        createdAt: since ?? new Date().toISOString(),
+        platform: result.platform ?? stored?.platform ?? DEFAULT_PLATFORM,
       });
     } catch (caught) {
       if (caught instanceof EarlyAccessError && caught.status === 404) {
-        if (readSignUp()?.token === urlToken) forgetSignUp();
+        const stored = readSignUpByToken(urlToken);
+        if (stored) forgetSignUp(stored.app);
         setLoad({ state: 'missing' });
         return;
       }
@@ -109,9 +129,11 @@ export function EarlyAccessStatusPage() {
   }, [urlToken]);
 
   // Check now, every 30 seconds while pending, and whenever the tab comes back.
+  // An iPhone shop has nothing coming: one check confirms it, no polling.
   useEffect(() => {
     if (!urlToken || granted) return;
     const first = window.setTimeout(() => void check(), 0);
+    if (notifyOnly) return () => window.clearTimeout(first);
     const poll = window.setInterval(() => void check(), POLL_MS);
     const onVisible = () => {
       if (document.visibilityState === 'visible') void check();
@@ -122,13 +144,13 @@ export function EarlyAccessStatusPage() {
       window.clearInterval(poll);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [urlToken, granted, check]);
+  }, [urlToken, granted, notifyOnly, check]);
 
   useEffect(() => {
-    if (granted) return;
+    if (granted || notifyOnly) return;
     const tick = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(tick);
-  }, [granted]);
+  }, [granted, notifyOnly]);
 
   return (
     <div className="min-h-[100svh] bg-white dark:bg-black text-black dark:text-white relative overflow-x-hidden flex flex-col">
@@ -163,17 +185,23 @@ export function EarlyAccessStatusPage() {
           <>
             {duplicate ? (
               <p className="mb-8 w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] px-5 py-3 text-center text-sm text-gray-700 dark:text-gray-300">
-                This email already asked for access. Here is where it stands.
+                {shop
+                  ? 'This email already asked to join the shop test. Here is where it stands.'
+                  : 'This email already asked for access. Here is where it stands.'}
               </p>
             ) : null}
-            {granted ? (
-              platform === 'iphone' ? (
+            {notifyOnly ? (
+              <ShopNotifyOnly />
+            ) : granted ? (
+              shop ? (
+                <GrantedShop optInUrl={shown.result.optInUrl} />
+              ) : platform === 'iphone' ? (
                 <GrantedIphone />
               ) : (
                 <Granted optInUrl={shown.result.optInUrl} />
               )
             ) : (
-              <Waiting platform={platform} createdAt={createdAt} now={now} stale={shown.stale} />
+              <Waiting app={app} platform={platform} createdAt={createdAt} now={now} stale={shown.stale} />
             )}
           </>
         )}
@@ -183,11 +211,13 @@ export function EarlyAccessStatusPage() {
 }
 
 function Waiting({
+  app,
   platform,
   createdAt,
   now,
   stale,
 }: {
+  app: EarlyApp;
   platform: Platform;
   createdAt: string;
   now: number;
@@ -232,7 +262,7 @@ function Waiting({
       ) : null}
 
       <ol className="mt-10 w-full flex flex-col gap-4 text-left">
-        {WAITING_STEPS[platform].map((step, i) => {
+        {(app === 'shop' ? SHOP_WAITING_STEPS : WAITING_STEPS[platform]).map((step, i) => {
           const state = i === 0 ? 'done' : i === 1 ? 'active' : 'next';
           return (
             <li key={step} className="flex items-center gap-4">
@@ -368,6 +398,78 @@ function GrantedIphone() {
         Open it on your iPhone and install GRIDGO in TestFlight.
       </p>
       <TestFlightBox className="mt-10 w-full" />
+    </motion.div>
+  );
+}
+
+/** A shop's Google Play invite: the supplier opt-in link, then what the test asks of a shop. */
+function GrantedShop({ optInUrl }: { optInUrl: string | null }) {
+  const heading = useFocusOnMount<HTMLHeadingElement>();
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="flex flex-col items-center text-center"
+    >
+      <GridDots lit={9} size={22} />
+      <h1 ref={heading} tabIndex={-1} className="mt-10 text-5xl md:text-6xl font-bold tracking-tight text-[var(--color-primary-text)] outline-none" aria-live="polite">
+        You're in
+      </h1>
+      <p className="mt-4 text-lg text-gray-700 dark:text-gray-300">Your GRIDGO for shops invite is in your inbox.</p>
+
+      {optInUrl ? (
+        <a
+          href={optInUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-10 inline-flex items-center justify-center gap-2 w-full px-8 py-4 rounded-full bg-[var(--color-primary)] text-black font-bold text-base hover:brightness-110 transition shadow-[0_0_20px_rgba(255,222,88,0.3)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+        >
+          Open Google Play
+          <ExternalLink size={18} aria-hidden="true" />
+        </a>
+      ) : null}
+      <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+        Use the same Google account you signed up with.
+      </p>
+
+      <ol className="mt-12 w-full flex flex-col gap-3 text-left rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] px-5 py-4">
+        {SHOP_STEPS.slice(2).map((step) => (
+          <li key={step} className="flex items-start gap-3 font-semibold">
+            <Check size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-[var(--color-primary-text)]" />
+            <span>{step}</span>
+          </li>
+        ))}
+      </ol>
+    </motion.div>
+  );
+}
+
+/** The shop app is Android-only for now; an iPhone shop is told when that changes. */
+function ShopNotifyOnly() {
+  const heading = useFocusOnMount<HTMLHeadingElement>();
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="flex flex-col items-center text-center"
+    >
+      <span className="size-16 rounded-2xl bg-[var(--color-primary)] text-black flex items-center justify-center" aria-hidden="true">
+        <Bell size={28} />
+      </span>
+      <h1 ref={heading} tabIndex={-1} className="mt-10 text-4xl md:text-5xl font-bold tracking-tight outline-none" aria-live="polite">
+        You're on the list
+      </h1>
+      <p className="mt-4 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+        GRIDGO for shops is Android-only for now. We will email you first when it comes to iPhone.
+      </p>
+      <p className="mt-3 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+        No invite is coming yet, so there is nothing to wait for. You can close this page.
+      </p>
+      <p className="mt-10 w-full rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] px-5 py-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+        Have an Android phone at the shop? Join the test from it with the email signed in to its Play Store.
+      </p>
     </motion.div>
   );
 }

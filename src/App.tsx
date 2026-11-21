@@ -3,7 +3,7 @@ import type { ComponentType, ForwardRefExoticComponent, HTMLAttributes, MouseEve
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { EcosystemSection } from './components/EcosystemSection';
 import { HowItWorksVideos } from './components/HowItWorksVideos';
-import { Menu, X, MessageCircle, Zap, ShieldCheck, ChevronUp, ChevronDown, Moon, Sun, Smartphone } from 'lucide-react';
+import { Menu, X, MessageCircle, Zap, ShieldCheck, ChevronUp, ChevronDown, Moon, Sun, Smartphone, Store, ArrowRight } from 'lucide-react';
 import { HardDriveUploadIcon, TruckIcon, ListIcon, TimerIcon, MessageCircleIcon } from 'lucide-animated';
 import { Link } from 'react-router-dom';
 import { landingLinks } from './utils/landingLinks';
@@ -11,7 +11,7 @@ import { useTheme } from './utils/useTheme';
 import { OpenerStage } from './components/OpenerIntro';
 import { FooterLegalLinks } from './legal/FooterLegalLinks';
 import { openCookieSettings } from './consent/cookieChoice';
-import { EARLY_ACCESS_NOTE } from './earlyAccess/logic';
+import { EARLY_ACCESS_NOTE, SHOP_EARLY_ACCESS_PATH } from './earlyAccess/logic';
 import { AppleMark, GooglePlayMark } from './components/BrandMarks';
 
 /**
@@ -93,11 +93,12 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
         </a>
 
         {/* Center Nav */}
-        <div className={`hidden xl:flex whitespace-nowrap rounded-full px-6 py-2.5 items-center gap-8 text-sm font-medium absolute left-1/2 -translate-x-1/2 border transition duration-500 ${isScrolled ? 'bg-white dark:bg-black/60 backdrop-blur-md border-black/10 dark:border-white/10' : 'bg-transparent border-transparent backdrop-blur-none'}`}>
+        <div className={`hidden 2xl:flex whitespace-nowrap rounded-full px-6 py-2.5 items-center gap-7 text-sm font-medium absolute left-1/2 -translate-x-1/2 border transition duration-500 ${isScrolled ? 'bg-white dark:bg-black/60 backdrop-blur-md border-black/10 dark:border-white/10' : 'bg-transparent border-transparent backdrop-blur-none'}`}>
           {NAV_LINKS.map((link) => (
             <a key={link.id} href={link.href} aria-current={active === link.id ? 'true' : undefined} className={linkClass(link.id)}>{link.label}</a>
           ))}
           <Link to="/tutorials" className="transition-colors hover:text-[var(--color-primary)]">Tutorials</Link>
+          <Link to={SHOP_EARLY_ACCESS_PATH} className="font-bold text-[var(--color-primary-text)] transition-colors hover:text-[var(--color-primary)]">For print shops</Link>
         </div>
 
         {/* Right Nav */}
@@ -120,7 +121,7 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
           <button
             aria-label={isOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isOpen}
-            className={`xl:hidden p-2 rounded-full relative border transition duration-500 ${isScrolled ? 'bg-white dark:bg-black/60 backdrop-blur-md border-black/10 dark:border-white/10' : 'bg-transparent border-transparent backdrop-blur-none'}`}
+            className={`2xl:hidden p-2 rounded-full relative border transition duration-500 ${isScrolled ? 'bg-white dark:bg-black/60 backdrop-blur-md border-black/10 dark:border-white/10' : 'bg-transparent border-transparent backdrop-blur-none'}`}
             onClick={() => setIsOpen(!isOpen)}
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -135,12 +136,13 @@ function Navbar({ isDarkMode, toggleDarkMode, revealed, onLogo }: { isDarkMode: 
             initial={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-            className="fixed inset-0 z-50 bg-white dark:bg-black/90 backdrop-blur-lg flex flex-col items-center justify-center gap-8 xl:hidden"
+            className="fixed inset-0 z-50 bg-white dark:bg-black/90 backdrop-blur-lg flex flex-col items-center justify-center gap-8 2xl:hidden"
           >
             {NAV_LINKS.map((link) => (
               <a key={link.id} href={link.href} onClick={() => setIsOpen(false)} aria-current={active === link.id ? 'true' : undefined} className={`text-2xl font-bold transition-colors ${linkClass(link.id)}`}>{link.label}</a>
             ))}
             <Link to="/tutorials" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Tutorials</Link>
+            <Link to={SHOP_EARLY_ACCESS_PATH} onClick={() => setIsOpen(false)} className="text-2xl font-bold text-[var(--color-primary-text)] hover:text-[var(--color-primary)] transition-colors">For print shops</Link>
             <Link to="/download#early-access" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Get Early Access</Link>
             <Link to="/download" onClick={() => setIsOpen(false)} className="text-2xl font-bold hover:text-[var(--color-primary)] transition-colors">Download</Link>
             {/* <div className="flex gap-4 mt-8">
@@ -217,6 +219,20 @@ function HeroSection({ isDarkMode, revealed }: { isDarkMode?: boolean, revealed:
               </Link>
             </div>
             <p className="mb-5 text-sm font-medium text-gray-700 dark:text-gray-300">{EARLY_ACCESS_NOTE}</p>
+            {/* Print shops have their own app and their own test: this is their way in. */}
+            <Link
+              to={SHOP_EARLY_ACCESS_PATH}
+              className="group mb-6 flex w-full max-w-md sm:max-w-lg items-center gap-3 rounded-full border border-[var(--color-primary)]/60 bg-white/70 py-2 pl-2 pr-5 text-left backdrop-blur-md transition hover:border-[var(--color-primary)] dark:bg-black/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)] text-black">
+                <Store size={20} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1 leading-tight">
+                <span className="block text-[15px] font-bold text-black dark:text-white">Become a printing supplier</span>
+                <span className="block text-[13px] text-gray-700 dark:text-gray-300">Own or work at a print shop? Get print jobs near you.</span>
+              </span>
+              <ArrowRight size={18} aria-hidden="true" className="shrink-0 text-[var(--color-primary-text)] transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
+            </Link>
             {revealed && (
               <motion.a
                 href="#features"
