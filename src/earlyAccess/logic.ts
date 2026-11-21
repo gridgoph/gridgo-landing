@@ -61,6 +61,22 @@ export const SHOP_STEPS: string[] = [
   'Keep it installed for 14 days and take test jobs.',
 ];
 
+/**
+ * An iPhone shop is a notify-me: the shop app is Android-only, so no invite,
+ * install or 14-day test is promised. These replace SHOP_STEPS beside the form.
+ */
+export const SHOP_IPHONE_STEPS: string[] = [
+  "Enter your email and, if you like, your shop's name.",
+  'GRIDGO for shops is Android-only for now, so no invite is sent yet.',
+  'We email you first when it comes to iPhone.',
+];
+
+/** The steps beside the form for this app and phone. */
+export function stepsFor(app: EarlyApp, platform: Platform): string[] {
+  if (app === 'shop') return platform === 'iphone' ? SHOP_IPHONE_STEPS : SHOP_STEPS;
+  return SIGN_UP_STEPS[platform];
+}
+
 /** The shop version of the form, per phone. iPhone is a notify-me, not an invite. */
 export const SHOP_FORM_COPY: Record<
   Platform,

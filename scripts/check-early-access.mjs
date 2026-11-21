@@ -147,7 +147,12 @@ for (const field of ['copy.label', 'copy.placeholder', 'copy.hint', 'copy.consen
 }
 assert(/signUp\(\{\s*email,\s*source: currentSource\(search\),\s*platform,\s*app,/.test(form), 'The chosen phone and app reach the sign-up.');
 assert(phoneChoice.includes('type="radio"') && phoneChoice.includes('<fieldset'), 'The phone choice is a labelled radio group.');
-assert(download.includes('shop ? SHOP_STEPS : SIGN_UP_STEPS[platform]'), 'The steps beside the form follow the app and the phone.');
+assert(download.includes('stepsFor(app, platform)'), 'The steps beside the form follow the app and the phone.');
+assert.deepEqual(logic.stepsFor('customer', 'android'), logic.SIGN_UP_STEPS.android);
+assert.deepEqual(logic.stepsFor('customer', 'iphone'), logic.SIGN_UP_STEPS.iphone);
+assert.deepEqual(logic.stepsFor('shop', 'android'), logic.SHOP_STEPS);
+assert.deepEqual(logic.stepsFor('shop', 'iphone'), logic.SHOP_IPHONE_STEPS, 'An iPhone shop gets notify-only steps (review of #54).');
+assert(!/Google Play|invite\b(?! is sent)|14 days|Install/.test(logic.SHOP_IPHONE_STEPS.join(' ')), 'The iPhone shop steps promise no Play invite, install or 14-day test.');
 assert(download.includes('<EarlyAccessForm app={app} platform={platform} onPlatformChange={setPlatform} />'));
 assert.equal(logic.TESTFLIGHT_URL, 'https://apps.apple.com/ph/app/testflight/id899247664');
 assert(testFlightBox.includes('href={TESTFLIGHT_URL}') && testFlightBox.includes('target="_blank"') && testFlightBox.includes('rel="noopener noreferrer"'), 'Get TestFlight opens the App Store in a new tab.');

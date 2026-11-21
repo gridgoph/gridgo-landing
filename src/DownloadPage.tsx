@@ -32,9 +32,8 @@ import {
   DEFAULT_PLATFORM,
   EARLY_ACCESS_NOTE,
   SECTION_COPY,
-  SHOP_STEPS,
   SHOP_TEAM_NOTE,
-  SIGN_UP_STEPS,
+  stepsFor,
   type EarlyApp,
   type Platform,
 } from './earlyAccess/logic';
@@ -331,11 +330,15 @@ function InstallChoices() {
   );
 }
 
-function EarlyAccessSection() {
+/**
+ * Option 1. Exported, with the phone settable, so scripts/check-early-access-render.mjs
+ * can render the whole section for each app and phone.
+ */
+export function EarlyAccessSection({ initialPlatform = DEFAULT_PLATFORM }: { initialPlatform?: Platform } = {}) {
   const { search } = useLocation();
   // `?app=shop` (every "for print shops" link) preselects the shop app; the switch still works.
   const [app, setApp] = useState<EarlyApp>(() => appFromSearch(search) ?? DEFAULT_APP);
-  const [platform, setPlatform] = useState<Platform>(DEFAULT_PLATFORM);
+  const [platform, setPlatform] = useState<Platform>(initialPlatform);
   // A later link with another ?app= (same page, new address) picks again.
   const linkedApp = appFromSearch(search);
   const [seenLink, setSeenLink] = useState(linkedApp);
@@ -345,7 +348,9 @@ function EarlyAccessSection() {
   }
   const shop = app === 'shop';
   const copy = SECTION_COPY[app];
-  const steps = shop ? SHOP_STEPS : SIGN_UP_STEPS[platform];
+  // An iPhone shop only asks to be told: its steps promise no invite or install.
+  const steps = stepsFor(app, platform);
+  const notifyOnly = shop && platform === 'iphone';
   return (
     <section id="early-access" className="scroll-mt-8 pt-20 md:pt-28">
       <div className="relative overflow-clip rounded-3xl border border-[var(--color-primary)]/40 bg-[var(--color-primary)]/[0.05] p-6 sm:p-8 md:p-14">
@@ -375,7 +380,7 @@ function EarlyAccessSection() {
                 </li>
               ))}
             </ol>
-            {shop ? (
+            {shop && !notifyOnly ? (
               <p className="mt-8 flex items-start gap-3 rounded-2xl border border-black/10 dark:border-white/15 bg-white/60 dark:bg-white/[0.03] px-4 py-3.5 text-sm leading-relaxed text-gray-800 dark:text-gray-200">
                 <Users size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-[var(--color-primary-text)]" />
                 <span>{SHOP_TEAM_NOTE}</span>
