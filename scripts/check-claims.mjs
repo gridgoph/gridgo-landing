@@ -24,7 +24,7 @@ function sourceFiles(dir) {
 }
 
 const sources = sourceFiles(srcDir).map((file) => ({
-  file: file.slice(srcDir.length + 1),
+  file: file.slice(srcDir.length + 1).replace(/\\/g, '/'),
   text: readFileSync(file, 'utf8'),
 }));
 const allSource = sources.map((s) => s.text).join('\n') + '\n' + indexHtml;
