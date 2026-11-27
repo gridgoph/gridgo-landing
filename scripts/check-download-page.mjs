@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-const read = (p) => readFileSync(resolve(scriptDir, p), 'utf8');
+const read = (p) => readFileSync(resolve(scriptDir, p), 'utf8').replace(/\r\n/g, '\n');
 
 const app = read('../src/App.tsx');
 const routeTable = read('../src/AppRoutes.tsx');

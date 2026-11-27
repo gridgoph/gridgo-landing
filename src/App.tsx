@@ -513,9 +513,9 @@ function AboutSection({ isDarkMode }: { isDarkMode?: boolean }) {
             whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
             transition={{ duration: 1, ease: 'easeOut' }}
             viewport={{ once: true, margin: '-100px' }}
-            className="w-full flex justify-center h-full"
+            className="w-full flex justify-center items-center h-full"
           >
-            <img src="/office.png" alt="GRIDGO Office" className="w-full h-full object-cover aspect-[4/5]" />
+            <img src="/GRIDGO%20Founders%20Team%20Portrait.png" alt="GRIDGO founders" className="w-full h-auto object-cover aspect-[3/2]" />
           </motion.div>
 
           <div className="flex flex-col justify-between h-full py-1">
@@ -568,7 +568,7 @@ function TeamMember({ image, role, name, quote, delay = 0, reverse = false }: Te
       className={`flex flex-col ${reverse ? 'md:flex-row-reverse' : 'md:flex-row'} items-center gap-12 max-w-5xl mx-auto mb-32`}
     >
       <div className="w-full md:w-1/2 flex justify-center">
-        <img src={image} alt={name} className="w-64 h-64 object-cover rounded-full" />
+        <img src={image} alt={name} className="w-64 h-64 object-cover object-[center_18%] rounded-full" />
       </div>
       <div className={`w-full md:w-1/2 ${reverse ? 'text-right' : 'text-left'}`}>
         <p className="text-[var(--color-primary)] font-semibold mb-1">Meet the {role}</p>
@@ -588,26 +588,26 @@ function TeamSection({ isDarkMode }: { isDarkMode?: boolean }) {
       <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-0 pointer-events-none dark:hidden" />
       <div className="px-8 relative z-10">
         <TeamMember
-          image="/JR.png"
+          image="/JR.jpg"
           role="founder"
           name="John Royce Frivaldo"
           quote="The future isn't about AI replacing our hands, but about humans using it as a catapult to reach new heights."
         />
         <TeamMember
-          image="/Mark.png"
+          image="/Mark.jpg"
           role="Developer"
           name="Mark David Prado"
           quote='"Roses are red, violets are blue. My code might have bugs, but my love for you is true."'
           reverse={true}
         />
         <TeamMember
-          image="/Ven.png"
+          image="/Ven.jpg"
           role="Developer"
           name="Rovenado Nesta Villotes"
           quote="People are not driven by past causes but move toward goals that they themselves set."
         />
         <TeamMember
-          image="/Justin.png.png"
+          image="/Justin.jpg"
           role="Marketing Lead"
           name="Justin Vince Oroña"
           quote="Where my tendons have been torn, my psyche has been mended. This was a worthy trade"

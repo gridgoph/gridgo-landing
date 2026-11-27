@@ -1,5 +1,16 @@
 import assert from 'node:assert/strict';
-import { submitDeletionRequest } from '../src/legal/deletionRequest.ts';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
+
+const scriptDir = dirname(fileURLToPath(import.meta.url));
+const raw = readFileSync(resolve(scriptDir, '../src/legal/deletionRequest.ts'), 'utf8')
+  .replace(/:\s*string/g, '')
+  .replace(/:\s*boolean/g, '')
+  .replace(/:\s*typeof\s+fetch\s*=\s*fetch/g, ' = fetch')
+  .replace(/:\s*Promise<void>/g, '');
+const mod = await import(`data:text/javascript;base64,${Buffer.from(raw).toString('base64')}`);
+const { submitDeletionRequest } = mod;
 let called;
 const fetchImpl = async (url, init) => { called = { url, init }; return new Response('{"ok":true}', { status: 202 }); };
 await submitDeletionRequest('account@example.test', true, '/api', fetchImpl);
